@@ -1,0 +1,35 @@
+{
+  "name": "desk-pet-mac",
+  "productName": "DeskPet",
+  "version": "1.0.0",
+  "description": "A cute interactive desktop pet for macOS with reminders and random speeches",
+  "author": "DeskPet",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "build": "electron-builder --mac dmg",
+    "build:dir": "electron-builder --mac --dir"
+  },
+  "devDependencies": {
+    "electron": "^33.4.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.deskpet.mac",
+    "productName": "DeskPet",
+    "category": "public.app-category.entertainment",
+    "mac": {
+      "target": ["dmg"],
+      "icon": "build/icon.icns"
+    },
+    "dmg": {
+      "installLocation": "/Applications"
+    },
+    "files": [
+      "src/**/*",
+      "build/**/*"
+    ]
+  }
+}
