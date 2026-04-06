@@ -6,250 +6,568 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   background: #f5f3f0;
   color: #333;
   font-size: 13px;
-  padding: 20px;
+  padding: 16px;
+  min-height: 100vh;
 }
-h2 { font-size: 18px; margin-bottom: 16px; color: #222; }
-.section { margin-bottom: 20px; }
+h2 { font-size: 17px; margin-bottom: 14px; color: #222; }
+.section { margin-bottom: 14px; }
 .section-title {
-  font-size: 12px; font-weight: 600;
-  color: #888; text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  font-size: 11px; font-weight: 600;
+  color: #999; text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 6px;
 }
 .card {
   background: white;
   border-radius: 10px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  margin-bottom: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-.row {
-  display: flex; align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-}
-.row + .row { border-top: 1px solid #f0f0f0; }
-label { color: #444; }
+.row { display:flex; align-items:center; justify-content:space-between; padding:4px 0; }
+.row + .row { border-top: 1px solid #f5f5f5; }
+label { color: #444; font-size: 13px; }
 .toggle {
-  position: relative; width: 42px; height: 24px;
+  position: relative; width: 40px; height: 22px; flex-shrink:0;
 }
-.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle input { opacity:0; width:0; height:0; }
 .toggle-slider {
-  position: absolute; inset: 0;
-  background: #ddd; border-radius: 24px;
-  cursor: pointer; transition: 0.2s;
+  position:absolute; inset:0;
+  background:#ddd; border-radius:22px; cursor:pointer; transition:0.2s;
 }
 .toggle-slider::before {
-  content: ''; position: absolute;
-  width: 18px; height: 18px;
-  left: 3px; bottom: 3px;
-  background: white; border-radius: 50%;
-  transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  content:''; position:absolute;
+  width:16px; height:16px; left:3px; bottom:3px;
+  background:white; border-radius:50%;
+  transition:0.2s; box-shadow:0 1px 2px rgba(0,0,0,0.15);
 }
-.toggle input:checked + .toggle-slider { background: #FF6B9D; }
-.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+.toggle input:checked + .toggle-slider { background:#FF6B9D; }
+.toggle input:checked + .toggle-slider::before { transform:translateX(18px); }
 
 input[type="range"] {
-  -webkit-appearance: none; width: 120px; height: 4px;
-  background: #ddd; border-radius: 2px; outline: none;
+  -webkit-appearance:none; width:100px; height:4px;
+  background:#ddd; border-radius:2px; outline:none;
 }
 input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 16px; height: 16px;
-  background: #FF6B9D; border-radius: 50%; cursor: pointer;
+  -webkit-appearance:none; width:14px; height:14px;
+  background:#FF6B9D; border-radius:50%; cursor:pointer;
 }
-.num { color: #FF6B9D; font-weight: 600; min-width: 28px; text-align: right; }
-.unit { color: #aaa; font-size: 11px; margin-left: 2px; }
+.num { color:#FF6B9D; font-weight:600; min-width:28px; text-align:right; font-size:13px; }
+.unit { color:#aaa; font-size:11px; margin-left:2px; }
 
-textarea {
+input[type="text"], input[type="password"], input[type="url"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+input[type="text"]:focus, input[type="password"]:focus, input[type="url"]:focus {
+  outline: none;
+  border-color: #FF6B9D;
+}
+select {
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 12px;
+  background: white;
+}
+
+.img-preview {
   width: 100%; height: 80px;
-  border: 1px solid #e0e0e0; border-radius: 8px;
-  padding: 8px 10px; font-size: 12px;
-  font-family: inherit; resize: vertical;
-  background: #fafafa;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden; cursor:pointer; transition: border-color 0.2s;
+  position:relative;
 }
-textarea:focus { outline: none; border-color: #FF6B9D; background: white; }
+.img-preview:hover { border-color: #FF6B9D; }
+.img-preview img { max-width:100%; max-height:100%; object-fit:contain; }
+.img-preview .hint { color:#aaa; font-size:11px; text-align:center; }
+.img-preview .change-btn {
+  position:absolute; bottom:4px; right:4px;
+  background:#FF6B9D; color:white; border:none;
+  border-radius:4px; padding:2px 6px; font-size:10px; cursor:pointer;
+}
 
-.btn-row { display: flex; gap: 8px; margin-top: 10px; }
-button {
-  flex: 1; padding: 8px;
-  border: none; border-radius: 8px;
-  cursor: pointer; font-size: 13px;
-  font-weight: 500; transition: 0.15s;
+/* 气泡样式预览 */
+.bubble-previews {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 8px;
 }
-.btn-save { background: #FF6B9D; color: white; }
-.btn-save:hover { background: #ff4d8a; }
-.btn-default { background: #eee; color: #555; }
-.btn-default:hover { background: #ddd; }
-.hint { font-size: 11px; color: #aaa; margin-top: 4px; }
+.bubble-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.bubble-preview-item input { display: none; }
+.bubble-preview-item label {
+  cursor: pointer;
+  width: 100%;
+  padding: 6px 4px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: #666;
+  transition: all 0.2s;
+}
+.bubble-preview-item input:checked + label {
+  border-color: #FF6B9D;
+  background: #fff5f8;
+  color: #FF6B9D;
+}
+.bubble-preview-item label:hover {
+  border-color: #ffb6cf;
+}
+
+/* 气泡样式示例 */
+.preview-rounded {
+  background: white;
+  border-radius: 28px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-family: -apple-system, sans-serif;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.preview-cloud {
+  background: linear-gradient(135deg, #fff 0%, #f8f8f8 100%);
+  border-radius: 40px 40px 40px 10px;
+  padding: 8px 12px;
+  font-size: 11px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.preview-handwrite {
+  background: #fffbf0;
+  border: 1.5px solid #e8d5b0;
+  border-radius: 8px 28px 28px 28px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-family: serif;
+  font-weight: 700;
+}
+.preview-minimal {
+  background: rgba(255,255,255,0.95);
+  border-radius: 16px;
+  padding: 8px 12px;
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.btn-row { display:flex; gap:6px; margin-top:10px; }
+button {
+  flex:1; padding:8px; border:none; border-radius:8px;
+  cursor:pointer; font-size:12px; font-weight:500; transition:0.15s;
+}
+.btn-save { background:#FF6B9D; color:white; }
+.btn-save:hover { background:#ff4d8a; }
+.btn-default { background:#eee; color:#555; }
+.btn-default:hover { background:#ddd; }
+.btn-test { background:#4A90D9; color:white; }
+.btn-test:hover { background:#3a7bc8; }
+.btn-memo { background:#27ae60; color:white; }
+.btn-memo:hover { background:#219a52; }
+
+.hint { font-size:11px; color:#999; margin-top:4px; line-height:1.4; }
+.hint-small { font-size:10px; color:#aaa; }
+
+.api-section { background:#f8f8f8; padding:10px; border-radius:6px; margin-top:8px; }
+
+.personality-card {
+  background: linear-gradient(135deg, #fff5f7 0%, #fff 100%);
+  border: 1px solid #ffe0e8;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 8px;
+}
+.personality-card h4 {
+  font-size: 13px;
+  color: #FF6B9D;
+  margin-bottom: 8px;
+}
+.personality-card p {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.6;
+}
 </style>
 </head>
 <body>
+
 <h2>⚙️ DeskPet 设置</h2>
 
+<!-- 🎨 立绘 -->
 <div class="section">
-  <div class="section-title">💧 提醒</div>
+  <div class="section-title">🎨 立绘形象</div>
   <div class="card">
-    <div class="row">
-      <label>💧 喝水提醒</label>
-      <label class="toggle"><input type="checkbox" id="enableWater" checked><span class="toggle-slider"></span></label>
+    <div class="img-preview" onclick="selectImage()">
+      <img id="previewImg" style="display:none">
+      <div id="previewHint" class="hint">点击选择图片<br>支持 PNG/JPG/WEBP</div>
+      <button class="change-btn" onclick="event.stopPropagation();selectImage()">更换</button>
     </div>
-    <div class="row">
-      <label>🚶 久坐提醒</label>
-      <label class="toggle"><input type="checkbox" id="enableStand" checked><span class="toggle-slider"></span></label>
+    <div class="row" style="margin-top:10px">
+      <label>显示大小</label>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="range" id="petScale" min="30" max="120" value="40">
+        <span class="num" id="scaleNum">40</span><span class="unit">%</span>
+      </div>
     </div>
-    <div class="row">
-      <label>👀 眼保健操</label>
-      <label class="toggle"><input type="checkbox" id="enableEye" checked><span class="toggle-slider"></span></label>
+    <div class="row" style="margin-top:8px">
+      <label>立绘适配</label>
+      <select id="imageFitMode" style="padding:6px 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;">
+        <option value="contain">完整显示</option>
+        <option value="cover">填满裁切</option>
+      </select>
     </div>
-    <div class="row">
-      <label>🍅 番茄钟</label>
-      <label class="toggle"><input type="checkbox" id="enablePomodoro" checked><span class="toggle-slider"></span></label>
+    
+    <!-- 对话框样式选择 -->
+    <div style="margin-top:10px">
+      <label style="margin-bottom:6px;display:block">对话框样式</label>
+      <div class="bubble-previews">
+        <div class="bubble-preview-item">
+          <input type="radio" name="bubbleStyle" id="bs-rounded" value="rounded">
+          <label for="bs-rounded">
+            <div class="preview-rounded">你好~</div>
+            经典圆角
+          </label>
+        </div>
+        <div class="bubble-preview-item">
+          <input type="radio" name="bubbleStyle" id="bs-cloud" value="cloud">
+          <label for="bs-cloud">
+            <div class="preview-cloud">你好~</div>
+            柔和云朵
+          </label>
+        </div>
+        <div class="bubble-preview-item">
+          <input type="radio" name="bubbleStyle" id="bs-handwrite" value="handwrite">
+          <label for="bs-handwrite">
+            <div class="preview-handwrite">你好~</div>
+            手写风格
+          </label>
+        </div>
+        <div class="bubble-preview-item">
+          <input type="radio" name="bubbleStyle" id="bs-minimal" value="minimal">
+          <label for="bs-minimal">
+            <div class="preview-minimal">你好~</div>
+            现代极简
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row" style="margin-top:10px">
+      <label>角色风格</label>
+      <select id="activePersona" style="padding:6px 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;">
+        <option value="companion">陪伴系</option>
+        <option value="tsundere">嘴硬系</option>
+        <option value="sleepy">困困系</option>
+        <option value="genki">元气系</option>
+        <option value="cool">冷淡系</option>
+        <option value="writer">文艺系</option>
+        <option value="boss">前辈系</option>
+        <option value="gremlin">捣蛋系</option>
+        <option value="random">随机切换</option>
+      </select>
+    </div>
+    <div class="row" style="margin-top:8px;display:block">
+      <label>称呼你</label>
+      <input type="text" id="preferredName" placeholder="比如：Ray、小主人" style="margin-top:6px">
     </div>
   </div>
 </div>
 
+<!-- 👁️ 视觉感知 -->
+<div class="section">
+  <div class="section-title">👁️ 视觉感知</div>
+  <div class="card">
+    <div class="row">
+      <label>启用视觉互动</label>
+      <label class="toggle"><input type="checkbox" id="visionEnabled" checked><span class="toggle-slider"></span></label>
+    </div>
+    <p class="hint">桌宠会感知鼠标位置并主动对话</p>
+  </div>
+</div>
+
+<!-- 🔌 API 控制 -->
+<div class="section">
+  <div class="section-title">🔌 API 控制</div>
+  <div class="card">
+    <div class="row">
+      <label>启用 API</label>
+      <label class="toggle"><input type="checkbox" id="apiEnabled"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="api-section" id="apiConfig" style="display:none">
+      <label>API 端点 URL</label>
+      <input type="url" id="apiEndpoint" placeholder="https://api.example.com/deskpet">
+      <label style="margin-top:8px;display:block">API Key (可选)</label>
+      <input type="password" id="apiKey" placeholder="sk-...">
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn-test" onclick="testAPI()">测试连接</button>
+      </div>
+      <p id="apiTestResult" class="hint-small" style="margin-top:6px;display:none"></p>
+    </div>
+    <p class="hint">API 会收到事件：look(注视)、click(点击)、observe(观察)</p>
+    
+    <!-- 人物性格说明 -->
+    <div class="personality-card">
+      <h4>🎭 桌宠人物性格</h4>
+      <p>
+        <b>名字：</b>小桌<br>
+        <b>性格：</b>活泼可爱、有点调皮、喜欢关心人<br>
+        <b>口头禅：</b>"我在呢~"、"注意休息哦"<br>
+        <b>喜好：</b>被点击、看到主人认真工作<br>
+        <b>讨厌：</b>被冷落太久、深夜还不睡
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ⏰ 提醒 -->
+<div class="section">
+  <div class="section-title">⏰ 健康提醒</div>
+  <div class="card">
+    <div class="row"><label>💧 喝水提醒</label><label class="toggle"><input type="checkbox" id="enableWater" checked><span class="toggle-slider"></span></label></div>
+    <div class="row"><label>🚶 久坐提醒</label><label class="toggle"><input type="checkbox" id="enableStand" checked><span class="toggle-slider"></span></label></div>
+    <div class="row"><label>👀 眼保健操</label><label class="toggle"><input type="checkbox" id="enableEye" checked><span class="toggle-slider"></span></label></div>
+    <div class="row"><label>🍅 番茄钟</label><label class="toggle"><input type="checkbox" id="enablePomodoro"><span class="toggle-slider"></span></label></div>
+    <div class="row"><label>🌙 智能作息</label><label class="toggle"><input type="checkbox" id="enableSmartSleep" checked><span class="toggle-slider"></span></label></div>
+  </div>
+</div>
+
+<!-- ⏱️ 间隔 -->
 <div class="section">
   <div class="section-title">⏱️ 提醒间隔</div>
   <div class="card">
     <div class="row">
-      <label>喝水提醒</label>
+      <label>喝水</label>
       <div style="display:flex;align-items:center;gap:6px">
-        <input type="range" id="waterInterval" min="15" max="120" value="45">
-        <span class="num" id="waterNum">45</span><span class="unit">分钟</span>
+        <input type="range" id="waterInterval" min="15" max="120" value="45" step="5">
+        <span class="num" id="waterNum">45</span><span class="unit">分</span>
       </div>
     </div>
     <div class="row">
-      <label>久坐提醒</label>
+      <label>久坐</label>
       <div style="display:flex;align-items:center;gap:6px">
-        <input type="range" id="standInterval" min="30" max="120" value="60">
-        <span class="num" id="standNum">60</span><span class="unit">分钟</span>
+        <input type="range" id="standInterval" min="30" max="120" value="60" step="5">
+        <span class="num" id="standNum">60</span><span class="unit">分</span>
       </div>
     </div>
     <div class="row">
-      <label>眼保健操</label>
+      <label>护眼</label>
       <div style="display:flex;align-items:center;gap:6px">
-        <input type="range" id="eyeInterval" min="30" max="180" value="90">
-        <span class="num" id="eyeNum">90</span><span class="unit">分钟</span>
-      </div>
-    </div>
-    <div class="row">
-      <label>番茄钟</label>
-      <div style="display:flex;align-items:center;gap:6px">
-        <input type="range" id="pomodoroDuration" min="10" max="60" value="25">
-        <span class="num" id="pomodoroNum">25</span><span class="unit">分钟</span>
+        <input type="range" id="eyeInterval" min="30" max="180" value="90" step="10">
+        <span class="num" id="eyeNum">90</span><span class="unit">分</span>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ⚙️ 其他 -->
 <div class="section">
-  <div class="section-title">🗣️ 自定义台词</div>
-  <div class="card">
-    <textarea id="customSpeeches" placeholder="JSON格式，支持多组：
-{
-  &quot;work&quot;: [&quot;写代码中...&quot;],
-  &quot;daily&quot;: [&quot;今天也要加油！&quot;],
-  &quot;tease&quot;: [&quot;点我干嘛~&quot;]
-}
-或直接写数组：[&quot;台词1&quot;, &quot;台词2&quot;]"></textarea>
-    <p class="hint">留空则使用默认台词库</p>
-  </div>
-</div>
-
-<div class="section">
-  <div class="section-title">🖼️ 显示</div>
+  <div class="section-title">⚙️ 其他</div>
   <div class="card">
     <div class="row">
-      <label>桌宠大小</label>
-      <div style="display:flex;align-items:center;gap:6px">
-        <input type="range" id="scale" min="50" max="200" value="100">
-        <span class="num" id="scaleNum">100</span><span class="unit">%</span>
-      </div>
+      <label>显示设置按钮</label>
+      <label class="toggle"><input type="checkbox" id="newVersionFlag" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="row">
+      <label>启用对话框</label>
+      <label class="toggle"><input type="checkbox" id="dialogueEnabled" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="row">
+      <label>启用随机移动</label>
+      <label class="toggle"><input type="checkbox" id="randomMoveEnabled" checked><span class="toggle-slider"></span></label>
     </div>
   </div>
 </div>
 
 <div class="btn-row">
   <button class="btn-default" onclick="resetDefaults()">恢复默认</button>
-  <button class="btn-save" onclick="saveSettings()">保存设置</button>
+  <button class="btn-memo" onclick="openMemo()">📝 备忘录</button>
+  <button class="btn-save" onclick="saveSettings()">保存 ✓</button>
 </div>
 
 <script>
 const defaults = {
-  enableWater: true, enableStand: true, enableEye: true, enablePomodoro: true,
-  waterInterval: 45, standInterval: 60, eyeInterval: 90, pomodoroDuration: 25,
-  scale: 100
+  petScale: 40, visionEnabled: true, apiEnabled: false,
+  apiEndpoint: '', apiKey: '', showSettingsBtn: true,
+  imageFitMode: 'contain',
+  bubbleStyle: 'rounded', dialogueEnabled: true, randomMoveEnabled: true,
+  activePersona: 'companion', preferredName: '',
+  enableWater: true, enableStand: true, enableEye: true,
+  enablePomodoro: false, enableSmartSleep: true,
+  waterInterval: 45, standInterval: 60, eyeInterval: 90
 };
 
-function bindRange(id, numId) {
-  const r = document.getElementById(id), n = document.getElementById(numId);
-  r.addEventListener('input', () => n.textContent = r.value);
+function bindRange(id) {
+  const r = document.getElementById(id);
+  const n = document.getElementById(id + 'Num');
+  if (r && n) r.addEventListener('input', () => n.textContent = r.value);
 }
 
 async function load() {
+  ['petScale', 'waterInterval', 'standInterval', 'eyeInterval'].forEach(bindRange);
+  
   const s = await window.electronAPI.getSettings();
-  const settings = Object.assign({}, defaults, s);
-  document.getElementById('enableWater').checked = settings.enableWater;
-  document.getElementById('enableStand').checked = settings.enableStand;
-  document.getElementById('enableEye').checked = settings.enableEye;
-  document.getElementById('enablePomodoro').checked = settings.enablePomodoro;
-  document.getElementById('waterInterval').value = settings.waterInterval;
-  document.getElementById('standInterval').value = settings.standInterval;
-  document.getElementById('eyeInterval').value = settings.eyeInterval;
-  document.getElementById('pomodoroDuration').value = settings.pomodoroDuration;
-  document.getElementById('scale').value = settings.scale || 100;
-  document.getElementById('scaleNum').textContent = settings.scale || 100;
-  document.getElementById('waterNum').textContent = settings.waterInterval;
-  document.getElementById('standNum').textContent = settings.standInterval;
-  document.getElementById('eyeNum').textContent = settings.eyeInterval;
-  document.getElementById('pomodoroNum').textContent = settings.pomodoroDuration;
-  bindRange('waterInterval', 'waterNum');
-  bindRange('standInterval', 'standNum');
-  bindRange('eyeInterval', 'eyeNum');
-  bindRange('pomodoroDuration', 'pomodoroNum');
-  bindRange('scale', 'scaleNum');
-  // 台词
-  const speeches = await window.electronAPI.getSpeeches();
-  if (speeches) document.getElementById('customSpeeches').value =
-    typeof speeches === 'string' ? speeches : JSON.stringify(speeches, null, 2);
+  const cfg = Object.assign({}, defaults, s);
+  
+  document.getElementById('petScale').value = cfg.petScale;
+  document.getElementById('scaleNum').textContent = cfg.petScale;
+  document.getElementById('visionEnabled').checked = cfg.visionEnabled !== false;
+  document.getElementById('apiEnabled').checked = cfg.apiEnabled === true;
+  document.getElementById('apiEndpoint').value = cfg.apiEndpoint || '';
+  document.getElementById('apiKey').value = cfg.apiKey || '';
+  document.getElementById('showSettingsBtn').checked = cfg.showSettingsBtn !== false;
+  document.getElementById('imageFitMode').value = cfg.imageFitMode || 'contain';
+  document.getElementById('activePersona').value = cfg.activePersona || 'companion';
+  document.getElementById('preferredName').value = cfg.preferredName || '';
+  document.getElementById('dialogueEnabled').checked = cfg.dialogueEnabled !== false;
+  document.getElementById('randomMoveEnabled').checked = cfg.randomMoveEnabled !== false;
+  document.getElementById('enableWater').checked = cfg.enableWater;
+  document.getElementById('enableStand').checked = cfg.enableStand;
+  document.getElementById('enableEye').checked = cfg.enableEye;
+  document.getElementById('enablePomodoro').checked = cfg.enablePomodoro;
+  document.getElementById('enableSmartSleep').checked = cfg.enableSmartSleep !== false;
+  document.getElementById('waterInterval').value = cfg.waterInterval;
+  document.getElementById('standInterval').value = cfg.standInterval;
+  document.getElementById('eyeInterval').value = cfg.eyeInterval;
+  document.getElementById('waterNum').textContent = cfg.waterInterval;
+  document.getElementById('standNum').textContent = cfg.standInterval;
+  document.getElementById('eyeNum').textContent = cfg.eyeInterval;
+  
+  // 气泡样式
+  const bubbleStyle = cfg.bubbleStyle || 'rounded';
+  const radio = document.querySelector(`input[name="bubbleStyle"][value="${bubbleStyle}"]`);
+  if (radio) radio.checked = true;
+  
+  // API 配置显示切换
+  document.getElementById('apiEnabled').addEventListener('change', (e) => {
+    document.getElementById('apiConfig').style.display = e.target.checked ? 'block' : 'none';
+  });
+  if (cfg.apiEnabled) document.getElementById('apiConfig').style.display = 'block';
+  
+  // 图片预览
+  const imgPath = await window.electronAPI.getPetImagePath?.();
+  if (imgPath) showPreview('file://' + imgPath.replace(/\\/g, '/'));
+}
+
+function showPreview(src) {
+  const img = document.getElementById('previewImg');
+  img.src = src;
+  img.style.display = 'block';
+  document.getElementById('previewHint').style.display = 'none';
+}
+
+async function selectImage() {
+  const result = await window.electronAPI.selectPetImage();
+  if (result) showPreview('file://' + result.replace(/\\/g, '/'));
+}
+
+function openMemo() {
+  window.electronAPI.openMemo?.();
+}
+
+async function testAPI() {
+  const btn = document.querySelector('.btn-test');
+  const result = document.getElementById('apiTestResult');
+  btn.textContent = '测试中...';
+  btn.disabled = true;
+  
+  try {
+    const endpoint = document.getElementById('apiEndpoint').value;
+    const apiKey = document.getElementById('apiKey').value;
+    
+    if (!endpoint) {
+      result.textContent = '❌ 请先填写 API 端点';
+      result.style.color = '#e74c3c';
+    } else {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey && { 'Authorization': `Bearer ${apiKey}` })
+        },
+        body: JSON.stringify({ event: 'test', timestamp: Date.now() })
+      });
+      
+      if (response.ok) {
+        result.textContent = '✅ 连接成功';
+        result.style.color = '#27ae60';
+      } else {
+        result.textContent = `⚠️ 服务器返回 ${response.status}`;
+        result.style.color = '#f39c12';
+      }
+    }
+  } catch (e) {
+    result.textContent = '❌ 连接失败: ' + e.message;
+    result.style.color = '#e74c3c';
+  }
+  
+  result.style.display = 'block';
+  btn.textContent = '测试连接';
+  btn.disabled = false;
 }
 
 async function saveSettings() {
+  const bubbleStyleRadio = document.querySelector('input[name="bubbleStyle"]:checked');
   const settings = {
+    petScale: parseInt(document.getElementById('petScale').value),
+    visionEnabled: document.getElementById('visionEnabled').checked,
+    apiEnabled: document.getElementById('apiEnabled').checked,
+    apiEndpoint: document.getElementById('apiEndpoint').value.trim(),
+    apiKey: document.getElementById('apiKey').value.trim(),
+    showSettingsBtn: document.getElementById('showSettingsBtn').checked,
+    imageFitMode: document.getElementById('imageFitMode').value,
+    bubbleStyle: bubbleStyleRadio ? bubbleStyleRadio.value : 'rounded',
+    activePersona: document.getElementById('activePersona').value,
+    preferredName: document.getElementById('preferredName').value.trim(),
+    dialogueEnabled: document.getElementById('dialogueEnabled').checked,
+    randomMoveEnabled: document.getElementById('randomMoveEnabled').checked,
     enableWater: document.getElementById('enableWater').checked,
     enableStand: document.getElementById('enableStand').checked,
     enableEye: document.getElementById('enableEye').checked,
     enablePomodoro: document.getElementById('enablePomodoro').checked,
+    enableSmartSleep: document.getElementById('enableSmartSleep').checked,
     waterInterval: parseInt(document.getElementById('waterInterval').value),
     standInterval: parseInt(document.getElementById('standInterval').value),
-    eyeInterval: parseInt(document.getElementById('eyeInterval').value),
-    pomodoroDuration: parseInt(document.getElementById('pomodoroDuration').value),
-    scale: parseInt(document.getElementById('scale').value)
+    eyeInterval: parseInt(document.getElementById('eyeInterval').value)
   };
   await window.electronAPI.saveSettings(settings);
-  // 台词
-  const txt = document.getElementById('customSpeeches').value.trim();
-  if (txt) {
-    try { await window.electronAPI.saveSpeeches(JSON.parse(txt)); } catch {}
-  } else {
-    await window.electronAPI.saveSpeeches(null);
-  }
+  await window.electronAPI.saveCompanionData({
+    activePersona: settings.activePersona,
+    preferredName: settings.preferredName
+  });
   alert('设置已保存！');
 }
 
 function resetDefaults() {
-  Object.entries(defaults).forEach(([k, v]) => {
-    const el = document.getElementById(k);
+  if (!confirm('确定恢复默认设置吗？')) return;
+  Object.keys(defaults).forEach(key => {
+    const el = document.getElementById(key);
     if (el) {
-      if (el.type === 'checkbox') el.checked = v;
-      else { el.value = v; document.getElementById(k + 'Num').textContent = v; }
+      if (el.type === 'checkbox') el.checked = defaults[key];
+      else if (el.tagName === 'SELECT') el.value = defaults[key];
+      else if (el.type === 'range') {
+        el.value = defaults[key];
+        const numEl = document.getElementById(key + 'Num');
+        if (numEl) numEl.textContent = defaults[key];
+      }
+      else el.value = defaults[key];
     }
   });
-  document.getElementById('customSpeeches').value = '';
+  // 重置气泡样式
+  const defaultRadio = document.querySelector('input[name="bubbleStyle"][value="rounded"]');
+  if (defaultRadio) defaultRadio.checked = true;
+  document.getElementById('apiConfig').style.display = 'none';
 }
 
 load();

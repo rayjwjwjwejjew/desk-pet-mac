@@ -1,35 +1,44 @@
 {
   "name": "desk-pet-mac",
-  "productName": "DeskPet",
-  "version": "1.0.0",
-  "description": "A cute interactive desktop pet for macOS with reminders and random speeches",
-  "author": "DeskPet",
-  "license": "MIT",
+  "version": "1.1.0",
+  "description": "AI-powered desktop pet for macOS",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron . --enable-logging",
     "build": "electron-builder --mac dmg",
-    "build:dir": "electron-builder --mac --dir"
-  },
-  "devDependencies": {
-    "electron": "^33.4.0",
-    "electron-builder": "^25.1.8"
+    "build-zip": "electron-builder --mac zip",
+    "dist": "npm run build && npm run build-zip"
   },
   "build": {
     "appId": "com.deskpet.mac",
     "productName": "DeskPet",
-    "category": "public.app-category.entertainment",
-    "mac": {
-      "target": ["dmg"],
-      "icon": "build/icon.icns"
-    },
-    "dmg": {
-      "installLocation": "/Applications"
+    "directories": {
+      "output": "dist"
     },
     "files": [
       "src/**/*",
-      "build/**/*"
-    ]
+      "!src/**/*.md"
+    ],
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.icns"
+    },
+    "dmg": {
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "asar": true,
+    "compression": "maximum"
+  },
+  "devDependencies": {
+    "electron": "^33.4.0",
+    "electron-builder": "^25.1.8"
   }
 }

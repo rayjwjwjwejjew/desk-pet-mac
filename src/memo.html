@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>📝 备忘录 - DeskPet</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f5f3f0;
+  color: #333;
+  font-size: 13px;
+  padding: 16px;
+  min-height: 100vh;
+}
+h2 { font-size: 17px; margin-bottom: 14px; color: #222; display: flex; align-items: center; gap: 6px; }
+
+.input-area {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  margin-bottom: 12px;
+}
+textarea {
+  width: 100%;
+  border: none;
+  resize: none;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  min-height: 60px;
+}
+textarea::placeholder { color: #aaa; }
+
+.remind-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+.remind-row label { font-size: 12px; color: #666; }
+.remind-row input[type="datetime-local"] {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.btn-add {
+  width: 100%;
+  padding: 10px;
+  background: #FF6B9D;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.btn-add:hover { background: #ff4d8a; }
+.btn-add:disabled { background: #ccc; cursor: not-allowed; }
+
+.memo-list { margin-top: 16px; }
+.section-title {
+  font-size: 11px; font-weight: 600;
+  color: #999; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.memo-item {
+  background: white;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transition: all 0.2s;
+}
+.memo-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.memo-item.done { opacity: 0.6; }
+.memo-item.done .memo-content { text-decoration: line-through; color: #999; }
+
+.memo-checkbox {
+  width: 20px; height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.memo-checkbox:hover { border-color: #FF6B9D; }
+.memo-checkbox.checked {
+  background: #FF6B9D;
+  border-color: #FF6B9D;
+}
+.memo-checkbox.checked::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+}
+
+.memo-content { flex: 1; }
+.memo-text { font-size: 14px; line-height: 1.5; }
+.memo-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.memo-time.has-remind { color: #FF6B9D; }
+
+.memo-delete {
+  width: 24px; height: 24px;
+  border: none;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.memo-delete:hover { background: #fee; color: #e74c3c; }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #aaa;
+}
+.empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+.quick-add {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.quick-tag {
+  padding: 4px 10px;
+  background: #f0f0f0;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+  border: none;
+}
+.quick-tag:hover { background: #FF6B9D; color: white; }
+</style>
+</head>
+<body>
+
+<h2>📝 备忘录</h2>
+
+<div class="input-area">
+  <textarea id="memoInput" placeholder="记点什么..."></textarea>
+  <div class="remind-row">
+    <label>⏰ 提醒</label>
+    <input type="datetime-local" id="remindTime">
+  </div>
+  <div class="quick-add">
+    <button class="quick-tag" onclick="quickAdd('喝水')">💧 喝水</button>
+    <button class="quick-tag" onclick="quickAdd('休息')">☕ 休息</button>
+    <button class="quick-tag" onclick="quickAdd('开会')">📅 开会</button>
+    <button class="quick-tag" onclick="quickAdd('吃饭')">🍚 吃饭</button>
+    <button class="quick-tag" onclick="quickAdd('睡觉')">🌙 睡觉</button>
+  </div>
+  <button class="btn-add" onclick="addMemo()">添加备忘录</button>
+</div>
+
+<div class="memo-list">
+  <div class="section-title">待办事项</div>
+  <div id="memoList"></div>
+</div>
+
+<script>
+let memos = [];
+
+async function loadMemos() {
+  memos = await window.electronAPI.getMemos();
+  renderMemos();
+}
+
+function renderMemos() {
+  const container = document.getElementById('memoList');
+  if (memos.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">📝</div>
+        <p>还没有备忘录</p>
+        <p style="font-size:12px;margin-top:4px">添加一个吧，我会提醒你哦~</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // 按时间倒序
+  const sorted = [...memos].sort((a, b) => b.createdAt - a.createdAt);
+  
+  container.innerHTML = sorted.map(m => {
+    const date = new Date(m.createdAt);
+    const timeStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+    
+    let remindStr = '';
+    if (m.remindAt) {
+      const r = new Date(m.remindAt);
+      remindStr = `⏰ ${r.getMonth()+1}/${r.getDate()} ${r.getHours()}:${String(r.getMinutes()).padStart(2,'0')}`;
+    }
+    
+    return `
+      <div class="memo-item ${m.done ? 'done' : ''}">
+        <div class="memo-checkbox ${m.done ? 'checked' : ''}" onclick="toggleMemo(${m.id})"></div>
+        <div class="memo-content">
+          <div class="memo-text">${escapeHtml(m.content)}</div>
+          <div class="memo-time ${m.remindAt ? 'has-remind' : ''}">
+            ${timeStr}
+            ${remindStr ? ' · ' + remindStr : ''}
+          </div>
+        </div>
+        <button class="memo-delete" onclick="deleteMemo(${m.id})">×</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function quickAdd(text) {
+  document.getElementById('memoInput').value = text;
+  // 默认提醒时间：喝水30分钟后，吃饭1小时后，睡觉30分钟后
+  const now = new Date();
+  if (text === '喝水') now.setMinutes(now.getMinutes() + 30);
+  else if (text === '吃饭') now.setHours(now.getHours() + 1);
+  else if (text === '睡觉') now.setMinutes(now.getMinutes() + 30);
+  else now.setMinutes(now.getMinutes() + 15);
+  
+  const iso = now.toISOString().slice(0, 16);
+  document.getElementById('remindTime').value = iso;
+}
+
+async function addMemo() {
+  const input = document.getElementById('memoInput');
+  const content = input.value.trim();
+  if (!content) return;
+  
+  const remindInput = document.getElementById('remindTime');
+  const remindAt = remindInput.value ? new Date(remindInput.value).getTime() : null;
+  
+  await window.electronAPI.addMemo(content, remindAt);
+  input.value = '';
+  remindInput.value = '';
+  loadMemos();
+  
+  // 通知桌宠
+  if (window.electronAPI.onShowBubble) {
+    setTimeout(() => {
+      window.electronAPI.onShowBubble('已记录！到时候我会提醒你~');
+    }, 100);
+  }
+}
+
+async function toggleMemo(id) {
+  await window.electronAPI.toggleMemo(id);
+  loadMemos();
+}
+
+async function deleteMemo(id) {
+  if (!confirm('确定删除这条备忘录吗？')) return;
+  await window.electronAPI.deleteMemo(id);
+  loadMemos();
+}
+
+// 设置默认提醒时间为明天9点
+document.getElementById('remindTime').addEventListener('focus', function() {
+  if (!this.value) {
+    const now = new Date();
+    now.setDate(now.getDate() + 1);
+    now.setHours(9, 0, 0, 0);
+    this.value = now.toISOString().slice(0, 16);
+  }
+});
+
+loadMemos();
+</script>
+</body>
+</html>

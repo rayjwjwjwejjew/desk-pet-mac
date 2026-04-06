@@ -2,81 +2,177 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>DeskPet</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
   width: 100%; height: 100%;
   overflow: hidden;
   background: transparent;
-  cursor: grab;
-  user-select: none;
-  -webkit-app-region: no-drag;
+  font-family: -apple-system, sans-serif;
+  pointer-events: none;
 }
-body { -webkit-app-region: drag; }
-
 #pet {
-  position: absolute;
-  bottom: 0; left: 0;
+  display: block;
   width: 100%; height: 100%;
-  background: transparent;
-  image-rendering: pixelated;
-  image-rendering: -webkit-optimize-contrast;
+  cursor: grab;
   pointer-events: auto;
 }
 #pet:active { cursor: grabbing; }
 
-/* ── 气泡 ── */
+/* 对话框样式 */
 #bubble {
   position: absolute;
-  top: -10px; right: -10px;
-  min-width: 80px; max-width: 200px;
-  padding: 10px 14px;
-  background: rgba(255,255,255,0.95);
-  border-radius: 16px;
-  font-size: 13px;
-  color: #333;
-  line-height: 1.4;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  background: white;
+  padding: 14px 20px;
+  font-size: 16px;
+  line-height: 1.45;
+  color: #1f1f1f;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.16);
   display: none;
-  word-break: break-word;
-  border: 1.5px solid rgba(255,100,150,0.3);
-  animation: bubbleIn 0.3s ease;
+  min-width: 140px;
+  max-width: 230px;
+  word-wrap: break-word;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 100;
 }
+
+#bubble.bubble-rounded {
+  border-radius: 28px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+}
+
+#bubble.bubble-cloud {
+  border-radius: 40px 40px 40px 10px;
+  font-family: "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-weight: 400;
+  background: linear-gradient(135deg, #fff 0%, #f8f8f8 100%);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+#bubble.bubble-handwrite {
+  border-radius: 8px 28px 28px 28px;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-weight: 700;
+  background: #fffbf0;
+  border: 2px solid #e8d5b0;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.08);
+  color: #3d3d3d;
+}
+
+#bubble.bubble-minimal {
+  border-radius: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+#bubble.bubble-tail {
+  border-radius: 28px;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-weight: 700;
+}
+
+#bubble.showing {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
 #bubble::after {
   content: '';
   position: absolute;
-  bottom: -10px; left: 20px;
-  border: 6px solid transparent;
-  border-top-color: rgba(255,255,255,0.95);
-  filter: drop-shadow(0 2px 1px rgba(0,0,0,0.05));
-}
-@keyframes bubbleIn {
-  from { opacity: 0; transform: scale(0.7) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  width: 0;
+  height: 0;
+  display: none;
 }
 
-/* ── 浮动动画 ── */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+#bubble.bubble-tail::after,
+#bubble.bubble-rounded::after,
+#bubble.bubble-cloud::after {
+  display: block;
 }
-/* ── 弹跳 ── */
-@keyframes bounce {
-  0%, 100% { transform: translateY(0) scaleY(1); }
-  25% { transform: translateY(-25px) scaleY(1.1); }
-  50% { transform: translateY(0) scaleY(0.9); }
-  75% { transform: translateY(-10px) scaleY(1.05); }
+
+#bubble.bubble-tail.bubble-side-left::after,
+#bubble.bubble-rounded.bubble-side-left::after {
+  right: -18px;
+  top: 50%;
+  transform: translateY(-40%) rotate(-8deg);
+  border-width: 10px 0 10px 18px;
+  border-style: solid;
+  border-color: transparent transparent transparent white;
 }
-/* ── 睡觉 ── */
-@keyframes sleep {
-  0%, 100% { transform: rotate(-3deg); }
-  50% { transform: rotate(3deg); }
+
+#bubble.bubble-tail.bubble-side-right::after,
+#bubble.bubble-rounded.bubble-side-right::after {
+  left: -18px;
+  top: 50%;
+  transform: translateY(-40%) rotate(8deg);
+  border-width: 10px 18px 10px 0;
+  border-style: solid;
+  border-color: transparent white transparent transparent;
+}
+
+#bubble.bubble-cloud.bubble-side-left::after {
+  right: -14px;
+  top: 55%;
+  border-width: 8px 0 8px 14px;
+  border-style: solid;
+  border-color: transparent transparent transparent #f8f8f8;
+}
+
+#bubble.bubble-cloud.bubble-side-right::after {
+  left: -14px;
+  top: 55%;
+  border-width: 8px 14px 8px 0;
+  border-style: solid;
+  border-color: transparent #f8f8f8 transparent transparent;
+}
+
+/* 按钮 - 动态定位 */
+#settings-btn, #close-btn {
+  position: absolute;
+  width: 26px; height: 26px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 51;
+  pointer-events: auto;
+}
+#settings-btn.visible, #close-btn.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+#settings-btn:hover, #close-btn:hover {
+  background: white;
+  transform: scale(1.1);
+}
+#settings-btn svg, #close-btn svg {
+  width: 14px; height: 14px;
+  fill: #666;
 }
 </style>
 </head>
 <body>
-<div id="bubble"></div>
+<div id="close-btn">
+  <svg viewBox="0 0 24 24"><path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.41L10.59 13.4 4.29 19.7 2.88 18.29 9.17 12 2.88 5.71 4.29 4.3l6.3 6.29 6.29-6.3z"/></svg>
+</div>
+<div id="settings-btn">
+  <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.63c-.04.34-.07.67-.07 1 0 .33.03.66.07.97l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63z"/></svg>
+</div>
+<div id="bubble"><span id="bubble-text"></span></div>
 <canvas id="pet"></canvas>
 <script src="app.js"></script>
 </body>
