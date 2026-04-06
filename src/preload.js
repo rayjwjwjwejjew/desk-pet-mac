@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveCompanionData: (updates) => ipcRenderer.invoke('save-companion-data', updates),
   recordPetEvent: (event, payload) => ipcRenderer.invoke('record-pet-event', event, payload),
   getActiveAppContext: () => ipcRenderer.invoke('get-active-app-context'),
+  analyzeScreenContext: () => ipcRenderer.invoke('analyze-screen-context'),
   hidePet: () => ipcRenderer.send('hide-pet'),
   snapToEdge: () => ipcRenderer.send('snap-to-edge'),
   moveWindowRandom: () => ipcRenderer.send('move-window-random'),

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, Notification, dialog } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, Notification, dialog, desktopCapturer } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { execFileSync } = require('child_process');
@@ -64,6 +64,116 @@ function getActiveAppContext() {
   } catch (e) {
     return { appName: '', category: 'idle', fetchedAt: Date.now() };
   }
+}
+
+// 获取浏览器当前页面标题
+async function getBrowserPageInfo() {
+  try {
+    const script = `
+      tell application "System Events"
+        tell (first application process whose frontmost is true)
+          try
+            return name of first window
+          on error
+            return ""
+          end try
+        end tell
+      end tell
+    `;
+    const windowTitle = execFileSync('osascript', ['-e', script], { encoding: 'utf8', timeout: 2000 }).trim();
+    
+    // 分析窗口标题判断网站类型
+    const title = windowTitle.toLowerCase();
+    let siteType = 'unknown';
+    let siteName = '';
+    
+    // 视频网站
+    if (/(youtube|bilibili|哔哩哔哩|netflix|腾讯视频|爱奇艺|优酷|抖音|tiktok)/.test(title)) {
+      siteType = 'video';
+      siteName = '视频';
+    }
+    // 社交媒体
+    else if (/(twitter|x\.com|微博|weibo|小红书|instagram|facebook|朋友圈)/.test(title)) {
+      siteType = 'social';
+      siteName = '社交';
+    }
+    // 购物
+    else if (/(淘宝|天猫|京东|amazon|拼多多|购物)/.test(title)) {
+      siteType = 'shopping';
+      siteName = '购物';
+    }
+    // 学习/知识
+    else if (/(github|stackoverflow|知乎|掘金|csdn|leetcode|牛客|wikipedia|wiki|教程|学习)/.test(title)) {
+      siteType = 'learning';
+      siteName = '学习';
+    }
+    // 工作/办公
+    else if (/(gmail|outlook|邮件|文档|doc|sheet|飞书|钉钉|腾讯文档|石墨)/.test(title)) {
+      siteType = 'work';
+      siteName = '工作';
+    }
+    // 新闻
+    else if (/(news|新闻|头条)/.test(title)) {
+      siteType = 'news';
+      siteName = '新闻';
+    }
+    // 游戏
+    else if (/(game|游戏|steam|epic)/.test(title)) {
+      siteType = 'game';
+      siteName = '游戏';
+    }
+    
+    return { windowTitle, siteType, siteName, hasContent: siteType !== 'unknown' };
+  } catch (e) {
+    return { windowTitle: '', siteType: 'unknown', siteName: '', hasContent: false };
+  }
+}
+
+// 屏幕内容识别 - 综合分析当前场景
+async function analyzeScreenContext() {
+  const appContext = getActiveAppContext();
+  const browserInfo = await getBrowserPageInfo();
+  
+  // 综合分析场景
+  let scene = 'idle';
+  let detail = '';
+  
+  if (appContext.category === 'coding') {
+    scene = 'coding';
+    detail = '写代码';
+  } else if (appContext.category === 'design') {
+    scene = 'design';
+    detail = '设计';
+  } else if (browserInfo.siteType === 'video') {
+    scene = 'entertainment';
+    detail = '看视频';
+  } else if (browserInfo.siteType === 'social') {
+    scene = 'social';
+    detail = '刷社交';
+  } else if (browserInfo.siteType === 'shopping') {
+    scene = 'shopping';
+    detail = '购物';
+  } else if (browserInfo.siteType === 'learning') {
+    scene = 'learning';
+    detail = '学习';
+  } else if (browserInfo.siteType === 'work') {
+    scene = 'working';
+    detail = '办公';
+  } else if (browserInfo.siteType === 'game') {
+    scene = 'gaming';
+    detail = '游戏';
+  } else if (appContext.category === 'document') {
+    scene = 'reading';
+    detail = '阅读';
+  }
+  
+  return {
+    app: appContext,
+    browser: browserInfo,
+    scene,
+    detail,
+    timestamp: Date.now()
+  };
 }
 
 function updateCompanionData(mutator) {
@@ -296,6 +406,7 @@ function createTray() {
 ipcMain.handle('get-settings', () => loadConfig());
 ipcMain.handle('get-companion-data', () => loadCompanionData());
 ipcMain.handle('get-active-app-context', () => getActiveAppContext());
+ipcMain.handle('analyze-screen-context', async () => analyzeScreenContext());
 ipcMain.handle('save-settings', (e, s) => {
   const prev = loadConfig();
   saveConfig({ ...prev, ...s });
