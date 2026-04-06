@@ -457,67 +457,53 @@ function syncActiveAppContext() {
 }
 
 let bubbleTimer = null;
+// 对话框尾尖指向：-1=左边，0=中间，1=右边
+let bubbleTail = 0;
+let bubbleTailX = 0; // 尾巴指向的X坐标（窗口内坐标）
+
 function positionBubble() {
   const w = canvas.offsetWidth;
   const h = canvas.offsetHeight;
-  const pad = 8;
-  const screenPad = 12;
+  
+  // 获取立绘的实际位置
   const pet = lastPetBounds || {
-    left: petOffX - w * 0.18,
-    right: petOffX + w * 0.18,
-    top: h * 0.22,
+    left: petOffX - w * 0.2,
+    right: petOffX + w * 0.2,
+    top: h * 0.15,
     bottom: petOffY
   };
-
+  
   const bubbleW = Math.min(230, w - 16);
   bubble.style.width = bubbleW + 'px';
-  const bubbleBox = bubble.getBoundingClientRect();
-  const realW = Math.ceil(bubbleBox.width || bubbleW);
-  const realH = Math.ceil(bubbleBox.height || 92);
-
-  const winX = window.screenX;
-  const winY = window.screenY;
-  const roomLeft = winX + pet.left - screenPad;
-  const roomRight = window.screen.availWidth - (winX + pet.right) - screenPad;
-  const canLeft = roomLeft >= realW + 18;
-  const canRight = roomRight >= realW + 18;
-  const roomAbove = winY + pet.top - screenPad;
-  const roomBelow = window.screen.availHeight - (winY + pet.bottom) - screenPad;
-  const canAbove = roomAbove >= realH + 18;
-  const canBelow = roomBelow >= realH + 18;
-
-  let side = 'left';
-  if (canLeft) side = 'left';
-  else if (canRight) side = 'right';
-  else if (canAbove) side = 'above';
-  else if (canBelow) side = 'below';
-  else side = 'overlap';
-
-  let bubbleX, bubbleY;
-  if (side === 'left') {
-    bubbleX = pet.left - realW - 14;
-    bubbleY = Math.max(pad, pet.top + 12);
-  } else if (side === 'right') {
-    bubbleX = pet.right + 14;
-    bubbleY = Math.max(pad, pet.top + 12);
-  } else if (side === 'above') {
-    bubbleX = pet.right - realW * 0.4;
-    bubbleY = pet.top - realH - 12;
-  } else if (side === 'below') {
-    bubbleX = pet.right - realW * 0.4;
-    bubbleY = pet.bottom + 12;
-  } else {
-    bubbleX = pet.left + (pet.right - pet.left - realW) / 2;
-    bubbleY = Math.max(pad, pet.top - realH + 18);
-  }
-
-  bubbleX = Math.max(pad, Math.min(w - realW - pad, bubbleX));
-  bubbleY = Math.max(pad, Math.min(h - realH - pad, bubbleY));
-
-  bubble.classList.remove('bubble-side-left', 'bubble-side-right', 'bubble-overlap');
-  bubble.classList.add(side === 'left' ? 'bubble-side-left' : side === 'right' ? 'bubble-side-right' : 'bubble-overlap');
-  bubble.style.left = bubbleX + 'px';
-  bubble.style.top = bubbleY + 'px';
+  
+  // 等待 DOM 更新后获取实际宽高
+  requestAnimationFrame(() => {
+    const realW = bubble.offsetWidth;
+    const realH = bubble.offsetHeight;
+    
+    // 始终显示在立绘头顶正上方（稍微偏向头部）
+    // 以立绘中心为基准，计算气泡位置
+    const petCenterX = petOffX; // 窗口内X坐标
+    
+    // 气泡水平居中在立绘头顶
+    let bubbleX = petCenterX - realW / 2;
+    
+    // 气泡在头顶上方（根据立绘顶部位置）
+    const headTop = lastPetBounds ? lastPetBounds.top : h * 0.15;
+    let bubbleY = headTop - realH - 15; // 在头顶上方15px
+    
+    // 限制在窗口内
+    bubbleX = Math.max(5, Math.min(w - realW - 5, bubbleX));
+    bubbleY = Math.max(5, bubbleY);
+    
+    // 设置气泡位置
+    bubble.style.left = bubbleX + 'px';
+    bubble.style.top = bubbleY + 'px';
+    
+    // 记录尾巴指向（居中指向立绘头顶）
+    bubbleTail = 0; // 中间
+    bubbleTailX = petCenterX - bubbleX; // 尾巴在气泡内的X位置
+  });
 }
 
 function showBubble(text, opts = {}) {
