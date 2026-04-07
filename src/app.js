@@ -621,44 +621,49 @@ function positionBubble() {
   const w = canvas.offsetWidth;
   const h = canvas.offsetHeight;
   
-  // 获取立绘的实际位置
-  const pet = lastPetBounds || {
+  // 立绘实际边界
+  const petBounds = lastPetBounds || {
     left: petOffX - w * 0.2,
     right: petOffX + w * 0.2,
     top: h * 0.15,
-    bottom: petOffY
+    bottom: petOffY,
+    height: h * 0.85,
+    width: w * 0.4
   };
   
-  const bubbleW = Math.min(230, w - 16);
-  bubble.style.width = bubbleW + 'px';
+  // 气泡最大宽度（不限制，根据内容自适应）
+  const maxBubbleW = Math.min(280, w - 8);
+  bubble.style.maxWidth = maxBubbleW + 'px';
+  bubble.style.width = 'auto';
   
   // 等待 DOM 更新后获取实际宽高
   requestAnimationFrame(() => {
     const realW = bubble.offsetWidth;
     const realH = bubble.offsetHeight;
     
-    // 始终显示在立绘头顶正上方（稍微偏向头部）
-    // 以立绘中心为基准，计算气泡位置
-    const petCenterX = petOffX; // 窗口内X坐标
+    // 立绘中心X坐标（窗口坐标系）
+    const petCenterX = petOffX;
     
-    // 气泡水平居中在立绘头顶
+    // 气泡水平居中在立绘上方
     let bubbleX = petCenterX - realW / 2;
     
-    // 气泡在头顶上方（根据立绘顶部位置）
-    const headTop = lastPetBounds ? lastPetBounds.top : h * 0.15;
-    let bubbleY = headTop - realH - 15; // 在头顶上方15px
+    // 气泡在立绘头顶正上方
+    const petTop = petBounds.top;
+    let bubbleY = petTop - realH - 12; // 头顶上方12px
     
-    // 限制在窗口内
-    bubbleX = Math.max(5, Math.min(w - realW - 5, bubbleX));
-    bubbleY = Math.max(5, bubbleY);
+    // 水平限制在窗口内
+    bubbleX = Math.max(4, Math.min(w - realW - 4, bubbleX));
+    // 垂直限制（如果超出顶部，就显示在立绘下方）
+    if (bubbleY < 4) {
+      bubbleY = petBounds.bottom + 12;
+    }
     
-    // 设置气泡位置
     bubble.style.left = bubbleX + 'px';
     bubble.style.top = bubbleY + 'px';
     
-    // 记录尾巴指向（居中指向立绘头顶）
-    bubbleTail = 0; // 中间
-    bubbleTailX = petCenterX - bubbleX; // 尾巴在气泡内的X位置
+    // 尾巴指向立绘头顶中心
+    bubbleTail = 0;
+    bubbleTailX = petCenterX - bubbleX;
   });
 }
 
@@ -694,23 +699,22 @@ function showBubble(text, opts = {}) {
 }
 
 // ═══════════════════════════════════════
-// 🖼️ 立绘绘制 - 自适应，无框限制
+// 🖼️ 立绘绘制 - 完全自适应，无尺寸限制
 // ═══════════════════════════════════════
 function drawPetImage(activeImg, w, h) {
   if (!activeImg?.complete || activeImg.naturalWidth <= 0) return false;
   const iw = activeImg.naturalWidth;
   const ih = activeImg.naturalHeight;
 
-  // 自适应缩放：立绘填满窗口高度（留一点边距）
-  const maxH = h * 0.95;
-  const maxW = w * 0.95;
-  
-  // 根据模式选择缩放
+  // 立绘填满整个窗口（根据设置决定是否裁切）
+  // 用户可以通过设置选择 contain（完整显示）或 cover（填满裁切）
   let scale;
   if (imageFitMode === 'cover') {
-    scale = Math.max(maxW / iw, maxH / ih);
+    // 填满窗口，可能裁切
+    scale = Math.max(w / iw, h / ih);
   } else {
-    scale = Math.min(maxW / iw, maxH / ih);
+    // 完整显示，保证不裁切
+    scale = Math.min(w / iw, h / ih);
   }
   
   const drawW = iw * scale;

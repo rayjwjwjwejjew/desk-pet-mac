@@ -26,7 +26,7 @@ canvas#pet {
   background: transparent !important;
 }
 
-/* 对话框样式 */
+/* 对话框样式 - 显示在桌宠头顶 */
 #bubble {
   position: absolute;
   background: white;
@@ -36,14 +36,15 @@ canvas#pet {
   color: #1f1f1f;
   box-shadow: 0 8px 26px rgba(0,0,0,0.16);
   display: none;
-  min-width: 140px;
-  max-width: 230px;
+  min-width: 120px;
   word-wrap: break-word;
   pointer-events: none;
   opacity: 0;
   transform: translateY(10px) scale(0.95);
   transition: opacity 0.25s ease, transform 0.25s ease;
   z-index: 100;
+  /* 确保对话框不会被截断 */
+  overflow: visible;
 }
 
 #bubble.bubble-rounded {
@@ -99,39 +100,64 @@ canvas#pet {
   display: none;
 }
 
-/* 气泡尾巴 - 动态指向 */
+/* 气泡尾巴 - 指向下方的桌宠 */
 #bubble::before {
   content: '';
   position: absolute;
   display: none;
 }
 
-/* 圆角气泡尾巴 */
+/* 圆角气泡尾巴 - 朝下 */
 #bubble.bubble-rounded::before,
 #bubble.bubble-tail::before {
   display: block;
   width: 0;
   height: 0;
   border-style: solid;
-  border-width: 0 12px 14px 12px;
-  border-color: transparent transparent white transparent;
-  /* 动态位置由 JS 控制 */
+  border-width: 14px 12px 0 12px;
+  border-color: white transparent transparent transparent;
   left: 50%;
   transform: translateX(-50%);
-  top: -14px;
+  bottom: -14px;
 }
 
-/* 云朵气泡尾巴 */
+/* 云朵气泡尾巴 - 朝下 */
 #bubble.bubble-cloud::before {
   display: block;
   width: 0;
   height: 0;
   border-style: solid;
-  border-width: 0 10px 12px 10px;
-  border-color: transparent transparent #f8f8f8 transparent;
+  border-width: 12px 10px 0 10px;
+  border-color: #f8f8f8 transparent transparent transparent;
   left: 50%;
   transform: translateX(-50%);
-  top: -12px;
+  bottom: -12px;
+}
+
+/* 手写气泡尾巴 - 朝下 */
+#bubble.bubble-handwrite::before {
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 12px 10px 0 10px;
+  border-color: #e8d5b0 transparent transparent transparent;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -12px;
+}
+
+/* 极简气泡尾巴 - 朝下 */
+#bubble.bubble-minimal::before {
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 10px 8px 0 8px;
+  border-color: rgba(255,255,255,0.95) transparent transparent transparent;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -10px;
 }
 
 /* 按钮 - 动态定位 */

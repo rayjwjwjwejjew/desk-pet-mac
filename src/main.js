@@ -301,8 +301,14 @@ function checkMemoReminders() {
 }
 
 // ─── 窗口创建 ───
+// 窗口大小基于用户设置，立绘会自适应填充窗口
 function getPetSize(scale) {
+  // scale 是百分比值，默认 40%
+  // 窗口大小 = 基础大小 * scale/100
+  // 基础窗口大小：180px 宽（立绘宽度基准）
   const base = Math.round(180 * (scale / 100));
+  // 窗口宽度约为立绘宽度的 2.6 倍（容纳立绘+浮动动画空间）
+  // 窗口高度约为立绘高度的 1.95 倍
   return { width: Math.round(base * 2.6), height: Math.round(base * 1.95) };
 }
 
