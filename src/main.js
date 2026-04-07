@@ -145,7 +145,7 @@ async function analyzeScreenContext() {
     scene = 'design';
     detail = '设计';
   } else if (browserInfo.siteType === 'video') {
-    scene = 'entertainment';
+    scene = 'video';
     detail = '看视频';
   } else if (browserInfo.siteType === 'social') {
     scene = 'social';
