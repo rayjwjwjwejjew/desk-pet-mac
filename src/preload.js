@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openMemo: () => ipcRenderer.send('open-memo'),
   selectPetImage: () => ipcRenderer.invoke('select-pet-image'),
   getPetImagePath: () => ipcRenderer.invoke('get-pet-image-path'),
+  reloadPetImage: () => ipcRenderer.send('reload-pet-image'),
+  onReloadPetImage: (cb) => ipcRenderer.on('reload-pet-image', cb),
   updatePosition: (x, y) => ipcRenderer.send('update-position', x, y),
   
   // 备忘录

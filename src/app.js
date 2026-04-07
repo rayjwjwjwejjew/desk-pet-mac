@@ -1220,13 +1220,7 @@ function render() {
     rot = Math.sin(floatOffset * 0.8) * 0.018;
     offsetY = Math.sin(floatOffset * 1.4) * 1.3;
     scaleY += Math.sin(floatOffset * 1.2) * 0.01;
-  } else if (motionState === MotionState.FALLEN) {
-    // 摔倒状态：倾斜 + 躺倒
-    rot = 0.4; // 向右倾斜
-    offsetY = 15; // 向下移
-    scaleX = 0.95;
-    scaleY = 0.9;
-  }
+
 
   if (dialogueState === DialogueState.SPEAKING || dialogueState === DialogueState.TYPING) {
     offsetY += Math.sin(floatOffset * 3) * 1.1;
@@ -1262,20 +1256,6 @@ function render() {
     ctx.fillStyle = 'rgba(120, 120, 255, 0.7)';
     const zz = 'z'.repeat((Math.floor(floatOffset / 20) % 3) + 1);
     ctx.fillText(zz, drawX + 30, drawY - h * 0.5 - Math.sin(floatOffset) * 6);
-  }
-  
-  // 摔倒时显示星星特效
-  if (motionState === MotionState.FALLEN) {
-    ctx.font = '16px sans-serif';
-    ctx.fillStyle = 'rgba(255, 200, 0, 0.8)';
-    const stars = ['✦', '✧', '★'];
-    for (let i = 0; i < 3; i++) {
-      const angle = floatOffset * 2 + i * Math.PI * 2 / 3;
-      const radius = 25 + Math.sin(floatOffset * 3 + i) * 5;
-      const sx = drawX + Math.cos(angle) * radius;
-      const sy = drawY - h * 0.3 + Math.sin(angle) * radius * 0.5;
-      ctx.fillText(stars[i], sx, sy);
-    }
   }
 
   // 更新按钮位置
@@ -1431,6 +1411,15 @@ if (window.electronAPI) {
   window.electronAPI.onTriggerState?.((state) => setState(state));
   window.electronAPI.onScaleChanged?.(() => initCanvas());
   window.electronAPI.onCompanionUpdated?.((data) => { companionData = data; });
+  window.electronAPI.onReloadPetImage?.(() => {
+    // 刷新立绘
+    window.electronAPI?.getPetImagePath?.().then((imgPath) => {
+      if (imgPath) {
+        customImg = new Image();
+        customImg.src = 'file://' + imgPath.replace(/\\/g, '/');
+      }
+    });
+  });
 }
 
 window.addEventListener('DOMContentLoaded', loadAll);

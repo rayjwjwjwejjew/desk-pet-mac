@@ -566,6 +566,12 @@ ipcMain.handle('select-pet-image', async () => {
 
 ipcMain.handle('get-pet-image-path', () => loadPetImage());
 
+// 立绘更新后刷新主窗口
+ipcMain.on('reload-pet-image', () => {
+  if (!petWindow || petWindow.isDestroyed()) return;
+  petWindow.webContents.send('reload-pet-image');
+});
+
 // 允许拖拽到屏幕边缘外一定范围
 ipcMain.on('update-position', (e, deltaX, deltaY) => {
   if (!petWindow || petWindow.isDestroyed()) return;

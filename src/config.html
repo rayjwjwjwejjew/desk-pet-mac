@@ -474,7 +474,11 @@ function showPreview(src) {
 
 async function selectImage() {
   const result = await window.electronAPI.selectPetImage();
-  if (result) showPreview('file://' + result.replace(/\\/g, '/'));
+  if (result) {
+    showPreview('file://' + result.replace(/\\/g, '/'));
+    // 通知主窗口刷新立绘
+    window.electronAPI.reloadPetImage?.();
+  }
 }
 
 function openMemo() {
