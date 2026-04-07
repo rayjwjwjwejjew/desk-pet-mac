@@ -14,11 +14,216 @@ const MotionState = {
   HAPPY: 'happy',
   SLEEPING: 'sleeping',
   WORKING: 'working',
-  LOOKING: 'looking'
+  LOOKING: 'looking',
+  FALLEN: 'fallen' // 新增：摔倒状态
 };
 const DialogueState = {
   SILENT: 'silent',
-  SPEAKING: 'speaking'
+  SPEAKING: 'speaking',
+  TYPING: 'typing' // 新增：打字中状态
+};
+
+// ═══════════════════════════════════════
+// ⌨️ 打字机效果系统
+// ═══════════════════════════════════════
+const TypeWriter = {
+  isTyping: false,
+  currentText: '',
+  currentIndex: 0,
+  speed: 45,
+  punctuationPause: {
+    '。': 400, '！': 350, '？': 350, '，': 200, '、': 150, '；': 250,
+    '：': 300, '…': 500, '~': 150, '!': 350, '?': 350, ',': 200, '.': 400
+  },
+  onComplete: null,
+  
+  start(text, callback) {
+    this.stop();
+    this.currentText = text;
+    this.currentIndex = 0;
+    this.isTyping = true;
+    this.onComplete = callback;
+    bubbleText.textContent = '';
+    setDialogueState(DialogueState.TYPING);
+    this.tick();
+  },
+  
+  tick() {
+    if (!this.isTyping || this.currentIndex >= this.currentText.length) {
+      this.complete();
+      return;
+    }
+    const char = this.currentText[this.currentIndex];
+    bubbleText.textContent += char;
+    this.currentIndex++;
+    let delay = this.speed + Math.random() * 20;
+    if (this.punctuationPause[char]) delay += this.punctuationPause[char];
+    if (Math.random() < 0.05) delay += 100 + Math.random() * 150;
+    setTimeout(() => this.tick(), delay);
+  },
+  
+  stop() { this.isTyping = false; },
+  
+  complete() {
+    this.isTyping = false;
+    setDialogueState(DialogueState.SPEAKING);
+    if (this.onComplete) this.onComplete();
+  },
+  
+  skip() {
+    if (this.isTyping) {
+      bubbleText.textContent = this.currentText;
+      this.complete();
+    }
+  }
+};
+
+// ═══════════════════════════════════════
+// 🧠 上下文记忆系统
+// ═══════════════════════════════════════
+const ConversationMemory = {
+  history: [],
+  maxHistory: 10,
+  currentTopic: null,
+  lastInteractionTime: Date.now(),
+  topics: {},
+  
+  record(message, type = 'pet') {
+    this.history.push({ message, type, time: Date.now(), topic: this.currentTopic });
+    if (this.history.length > this.maxHistory) this.history.shift();
+    this.lastInteractionTime = Date.now();
+  },
+  
+  setTopic(topic) {
+    this.currentTopic = topic;
+    if (!this.topics[topic]) this.topics[topic] = { count: 0, lastMention: 0 };
+    this.topics[topic].count++;
+    this.topics[topic].lastMention = Date.now();
+  },
+  
+  shouldFollowUp() {
+    const last = this.history[this.history.length - 1];
+    if (!last) return false;
+    const timeSince = Date.now() - last.time;
+    return timeSince > 60000 && timeSince < 300000;
+  },
+  
+  generateFollowUp() {
+    const topic = this.currentTopic;
+    const followUps = {
+      coding: ['那个bug修好了吗？', '代码写得怎么样了？', '还在写代码呀？'],
+      video: ['还在看视频吗？', '视频好看吗？', '看完了吗？'],
+      social: ['还在聊天呀？', '和朋友聊得开心吗？', '聊完了吗？'],
+      shopping: ['买到喜欢的了吗？', '还在逛呀？'],
+      learning: ['学得怎么样？', '这个知识点掌握了吗？'],
+      gaming: ['还在玩呀？', '赢了吗？'],
+      working: ['工作完成得怎么样？', '还在忙呀？']
+    };
+    if (topic && followUps[topic]) {
+      return followUps[topic][Math.floor(Math.random() * followUps[topic].length)];
+    }
+    return null;
+  }
+};
+
+// ═══════════════════════════════════════
+// ⏰ 时间感知系统
+// ═══════════════════════════════════════
+const TimeAwareness = {
+  lastSeenTime: null,
+  todayFirstSeen: null,
+  
+  init() {
+    const now = new Date();
+    const today = now.toDateString();
+    const stored = localStorage.getItem('deskPet_timeData');
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.lastDate !== today) {
+        this.todayFirstSeen = now;
+      } else {
+        this.todayFirstSeen = data.todayFirstSeen ? new Date(data.todayFirstSeen) : now;
+      }
+      this.lastSeenTime = data.lastSeenTime ? new Date(data.lastSeenTime) : null;
+    } else {
+      this.todayFirstSeen = now;
+    }
+    this.save();
+  },
+  
+  save() {
+    const now = new Date();
+    localStorage.setItem('deskPet_timeData', JSON.stringify({
+      lastDate: now.toDateString(),
+      todayFirstSeen: this.todayFirstSeen?.toISOString(),
+      lastSeenTime: now.toISOString()
+    }));
+  },
+  
+  getTimeOfDay() {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 9) return 'earlyMorning';
+    if (hour >= 9 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 14) return 'noon';
+    if (hour >= 14 && hour < 18) return 'afternoon';
+    if (hour >= 18 && hour < 21) return 'evening';
+    if (hour >= 21 && hour < 24) return 'night';
+    return 'lateNight';
+  },
+  
+  getTimeGreeting() {
+    const hour = new Date().getHours();
+    const name = preferredName();
+    if (this.lastSeenTime) {
+      const hoursSince = (Date.now() - this.lastSeenTime.getTime()) / (1000 * 60 * 60);
+      if (hoursSince > 24) return `${name}！好久不见，我好想你呀~`;
+      if (hoursSince > 12) return `${name}，你回来啦！等你好久了~`;
+    }
+    if (this.todayFirstSeen) {
+      const minutesSince = (Date.now() - this.todayFirstSeen.getTime()) / (1000 * 60);
+      if (minutesSince < 5) {
+        if (hour >= 5 && hour < 9) return `${name}，早上好！今天起得真早呀~`;
+        if (hour >= 9 && hour < 12) return `${name}，早上好！`;
+        if (hour >= 12 && hour < 14) return `${name}，中午好！吃饭了吗？`;
+        if (hour >= 14 && hour < 18) return `${name}，下午好！`;
+        if (hour >= 18 && hour < 21) return `${name}，晚上好！今天过得怎么样？`;
+        if (hour >= 21) return `${name}，这么晚还在呀，注意休息哦~`;
+      }
+    }
+    return null;
+  }
+};
+
+// ═══════════════════════════════════════
+// 🖱️ 鼠标空闲检测（8秒触发摔倒）
+// ═══════════════════════════════════════
+const MouseIdleDetector = {
+  lastMoveTime: Date.now(),
+  idleThreshold: 8000,
+  checkInterval: null,
+  onIdleCallback: null,
+  hasTriggered: false,
+  
+  init(callback) {
+    this.onIdleCallback = callback;
+    document.addEventListener('mousemove', () => this.onActivity());
+    document.addEventListener('mousedown', () => this.onActivity());
+    document.addEventListener('keydown', () => this.onActivity());
+    this.checkInterval = setInterval(() => this.check(), 1000);
+  },
+  
+  onActivity() {
+    this.lastMoveTime = Date.now();
+    this.hasTriggered = false;
+  },
+  
+  check() {
+    const idleTime = Date.now() - this.lastMoveTime;
+    if (idleTime >= this.idleThreshold && !this.hasTriggered) {
+      this.hasTriggered = true;
+      if (this.onIdleCallback) this.onIdleCallback(idleTime);
+    }
+  }
 };
 
 let motionState = MotionState.IDLE;
@@ -61,16 +266,20 @@ const LayerAnim = {
       this.nextBlinkAt = now + 2000 + Math.random() * 4000;
     }
     
-    if (dialogueState === DialogueState.SPEAKING) {
+    // 打字或说话时嘴巴动画
+    if (dialogueState === DialogueState.SPEAKING || dialogueState === DialogueState.TYPING) {
       this.mouthTarget = 0.3 + Math.sin(now * 0.015) * 0.25;
     } else {
       this.mouthTarget = 0;
     }
     
+    // 耳朵动画
     if (motionState === MotionState.HAPPY) {
       this.earTarget = Math.sin(now * 0.003) * 8;
     } else if (motionState === MotionState.SLEEPING) {
       this.earTarget = -5;
+    } else if (motionState === MotionState.FALLEN) {
+      this.earTarget = -10; // 摔倒时耳朵耷拉
     } else {
       this.earTarget = Math.sin(now * 0.001) * 3;
     }
@@ -127,69 +336,222 @@ let companionData = {
 const Personas = {
   companion: {
     bubbleStyle: 'rounded',
-    idle: ['我在这陪你呢', '别着急，我们一点点来', '今天也想当你的后援', '慢慢做也很好', '有我在，不用怕', '今天也一起加油吧', '累了就歇会儿', '我会一直陪着你的'],
-    praise: ['你真的很稳', '这一步做得很漂亮', '我就知道你可以', '继续保持这个节奏', '你比昨天更厉害了', '这就是你的实力', '我为你骄傲', '做得太棒了'],
-    clingy: ['理理我嘛', '点你一下我就开心了', '我有在认真陪你哦', '再陪我一会儿好不好', '我想和你玩', '你不理我我会难过的', '戳我一下嘛', '我在这里等你哦'],
-    focused: ['进入状态了呢', '现在很适合继续推进', '专注的时候好厉害', '这个节奏很好', '保持这个感觉', '你认真起来的样子很棒', '继续，不要停', '效率越来越高了'],
-    // 场景对话
-    coding: ['写代码的时候最帅了', '这个 bug 我们一起解决', '专注编程的样子很有魅力', '代码写累了记得休息'],
-    video: ['在看视频呀？带我一个呗', '这个视频好看吗', '看视频也要记得眨眼哦', '休息休息眼睛吧'],
-    social: ['又在刷社交软件啦', '看到什么好玩的了', '和朋友聊得开心吗', '别刷太久哦'],
-    shopping: ['在买东西吗', '这个好看吗', '购物也要理性消费哦', '买到喜欢的东西了吗'],
-    learning: ['在学习呀，真棒', '这个知识点有意思', '学习使我快乐', '你认真的样子真好看'],
-    gaming: ['玩游戏呀，带我一起呗', '这局打得怎么样', '游戏虽好可不要贪玩哦', '赢了吗？']
+    idle: [
+      '我在这陪你呢', '别着急，我们一点点来', '今天也想当你的后援', '慢慢做也很好',
+      '有我在，不用怕', '今天也一起加油吧', '累了就歇会儿', '我会一直陪着你的',
+      '想我了没？', '今天心情怎么样？', '有什么想和我说的吗？', '我在这里等你哦',
+      '无聊了可以戳戳我', '我会一直陪着你的', '今天也要加油呀', '慢慢来，不着急',
+      '你是最棒的', '我相信你', '我们一起努力', '有什么困难告诉我',
+      '在发呆吗？', '想什么呢？', '我陪你一起发呆~', '安静的时候也不错'
+    ],
+    praise: [
+      '你真的很稳', '这一步做得很漂亮', '我就知道你可以', '继续保持这个节奏',
+      '你比昨天更厉害了', '这就是你的实力', '我为你骄傲', '做得太棒了',
+      '太厉害了！', '你真的超棒！', '为你点赞！', '继续加油！',
+      '你做到了！', '真为你高兴', '你进步好快', '这波操作很秀',
+      '完美！', '优秀！', '太强了！', '你是最棒的！',
+      '真厉害！', '干得漂亮！', '太赞了！', '佩服佩服！'
+    ],
+    clingy: [
+      '理理我嘛', '点你一下我就开心了', '我有在认真陪你哦', '再陪我一会儿好不好',
+      '我想和你玩', '你不理我我会难过的', '戳我一下嘛', '我在这里等你哦',
+      '陪我聊聊天吧', '我好无聊呀', '看看我嘛', '想你了~',
+      '别不理我嘛', '陪我玩一会儿', '我想你了', '你在忙什么呀',
+      '要抱抱~', '亲亲~', '摸摸头~', '举高高~'
+    ],
+    focused: [
+      '进入状态了呢', '现在很适合继续推进', '专注的时候好厉害', '这个节奏很好',
+      '保持这个感觉', '你认真起来的样子很棒', '继续，不要停', '效率越来越高了',
+      '专注模式开启！', '加油加油！', '你能行的！', '继续冲！',
+      '状态很好！', '保持专注！', '效率爆表！', '你超棒的！',
+      '心流状态！', '全速前进！', '冲冲冲！', '火力全开！'
+    ],
+    // 摔倒专用语录
+    fallen: [
+      '哥哥我摔倒了~', '呜呜，摔倒了...', '好痛呀，扶扶我嘛~', '摔倒了，要抱抱~',
+      '脚滑了一下~', '呜呜，好痛...', '快扶我起来~', '摔跤了，要安慰~',
+      '呜呜呜...', '好疼呀...', '要亲亲才能好~', '摔倒了，不理你了~',
+      '痛痛痛~', '呜呜，腿软了~', '站不起来了~', '要扶扶~'
+    ],
+    // 时间问候
+    greeting: {
+      earlyMorning: ['这么早呀，早安~', '起得真早！早安！', '清晨好呀~', '早起身体好~'],
+      morning: ['早上好！', '早安~今天也要加油哦', '早上好呀！', '新的一天开始啦~'],
+      noon: ['中午好！吃饭了吗？', '该吃午饭啦~', '中午记得休息一下', '午饭时间到~'],
+      afternoon: ['下午好！', '下午也要加油哦~', '下午茶时间到了吗？', '下午好呀~'],
+      evening: ['晚上好！', '今天辛苦啦~', '晚上好呀，放松一下吧', '晚饭吃了吗？'],
+      night: ['晚上好~', '今天过得怎么样？', '有点晚了哦~', '记得早点休息~'],
+      lateNight: ['这么晚还不睡呀？', '该睡觉啦~', '熬夜对身体不好哦', '快去休息吧~']
+    },
+    // 场景对话 - 每个场景扩展到12句
+    coding: [
+      '写代码的时候最帅了', '这个 bug 我们一起解决', '专注编程的样子很有魅力', '代码写累了记得休息',
+      '编程真有趣呀~', 'bug 又出现了？', '代码写得真好！', '逻辑很清晰呢',
+      '加油，bug 会被消灭的！', '写代码辛苦了~', '你真的很厉害！', '继续写，我陪着~',
+      '代码时间~', '程序员最帅了！', '这个实现很优雅~', '算法真巧妙！'
+    ],
+    video: [
+      '在看视频呀？带我一个呗', '这个视频好看吗', '看视频也要记得眨眼哦', '休息休息眼睛吧',
+      '什么视频呀？', '好看吗？', '看完记得继续工作哦~', '放松一下也好',
+      '视频时间有点久了~', '眼睛累不累？', '这个看起来很有趣', '一起看吧~',
+      '追剧吗？', '电影还是综艺？', '弹幕好玩吗？', '倍速看吗？'
+    ],
+    social: [
+      '又在刷社交软件啦', '看到什么好玩的了', '和朋友聊得开心吗', '别刷太久哦',
+      '社交时间~', '聊什么呢？', '带我一个呗~', '朋友多真好',
+      '记得回我消息哦~', '别把我忘了~', '社交也要适度哦', '聊完记得工作~',
+      '朋友圈有什么好玩的？', '微博热搜看了吗？', '小红书刷刷~', '有人在找你吗？'
+    ],
+    shopping: [
+      '在买东西吗', '这个好看吗', '购物也要理性消费哦', '买到喜欢的东西了吗',
+      '购物车满了没？', '买这个还是那个？', '理性消费哦~', '钱包还好吗？',
+      '这个看起来不错~', '要买这个吗？', '购物时间~', '买完记得工作~',
+      '双十一要到了吗？', '有优惠吗？', '满减凑一凑？', '快递到了吗？'
+    ],
+    learning: [
+      '在学习呀，真棒', '这个知识点有意思', '学习使我快乐', '你认真的样子真好看',
+      '好学的人最棒了！', '加油，你能学会的！', '学习辛苦了~', '休息一下吧',
+      '这个很难吗？', '需要帮忙吗？', '继续加油！', '你进步好快！',
+      '笔记做好了吗？', '复习了吗？', '考试准备得怎么样？', '学习计划完成了吗？'
+    ],
+    gaming: [
+      '玩游戏呀，带我一起呗', '这局打得怎么样', '游戏虽好可不要贪玩哦', '赢了吗？',
+      '游戏时间~', '带我玩嘛~', '这局能赢吗？', '加油！',
+      '输了别气馁~', '再来一局？', '玩得开心吗？', '该休息了~',
+      '什么游戏呀？', '排位吗？', '队友坑吗？', 'MVP是你吗？'
+    ],
+    working: [
+      '在工作呀，加油！', '工作辛苦了~', '效率很高嘛！', '继续加油！',
+      '工作也要注意休息哦', '你很敬业！', '忙完了吗？', '我陪你工作~',
+      '工作状态不错！', '保持这个节奏！', '快完成了吧？', '辛苦啦~',
+      '开会吗？', '报告写完了吗？', '项目进展如何？', 'deadline近了吗？'
+    ],
+    reading: [
+      '在阅读呀~', '看什么书呢？', '阅读使人进步', '读到好玩的了吗？',
+      '分享给我听听~', '我也想看~', '读书时间~', '安静阅读真好',
+      '这本书好看吗？', '学到了什么？', '继续读吧~', '阅读真好~',
+      '小说还是专业书？', '做笔记了吗？', '读完了吗？', '推荐给我呗~'
+    ]
   },
   tsundere: {
     bubbleStyle: 'minimal',
-    idle: ['我才不是在等你', '只是刚好在这里', '别磨蹭，继续呀', '今天也别偷懒', '哼，你终于来了', '我才不关心你在干嘛', '随便你啦', '别误会，我只是路过'],
-    praise: ['还行吧，算你厉害', '这次做得不错', '勉强夸你一下', '嗯，挺像样的', '也就那样吧', '别骄傲', '也就一般般', '算你及格了'],
-    clingy: ['我才没有想让你点我', '再点一下也不是不行', '只是顺手陪你一下', '哼，算你识相', '我才没有开心', '别、别误会', '只是刚好有空', '仅此一次哦'],
-    focused: ['嗯，这种时候还挺像样', '继续，不要停', '保持这个速度', '还算有点样子', '专注的时候勉强能看', '别分心', '就这样继续', '效率还行'],
-    coding: ['代码写得...还行吧', 'bug 多着呢，慢慢改', '哼，这种小问题', '也就我能忍你的代码风格'],
-    video: ['看视频都不带我', '有什么好看的', '我才不想看呢', '你自己看吧'],
-    social: ['又在聊天啊', '朋友比我重要是吧', '哼，去聊吧', '我才不在乎'],
-    shopping: ['买这么多东西', '又在乱花钱', '我才不想要礼物呢', '你自己决定'],
-    learning: ['学习？也就那样', '哼，装什么认真', '别问我问题', '自己查去'],
-    gaming: ['游戏有什么好玩的', '带我玩...也不是不行', '输了别找我', '赢了就了不起啊']
+    idle: [
+      '我才不是在等你', '只是刚好在这里', '别磨蹭，继续呀', '今天也别偷懒',
+      '哼，你终于来了', '我才不关心你在干嘛', '随便你啦', '别误会，我只是路过',
+      '...哼', '才没有想你', '别自作多情', '只是刚好有空'
+    ],
+    praise: [
+      '还行吧，算你厉害', '这次做得不错', '勉强夸你一下', '嗯，挺像样的',
+      '也就那样吧', '别骄傲', '也就一般般', '算你及格了',
+      '...还行', '勉强可以', '别得意忘形', '也就这样'
+    ],
+    clingy: [
+      '我才没有想让你点我', '再点一下也不是不行', '只是顺手陪你一下', '哼，算你识相',
+      '我才没有开心', '别、别误会', '只是刚好有空', '仅此一次哦',
+      '...才没有想你', '哼，理我一下', '才不是在等你', '随便你啦'
+    ],
+    focused: [
+      '嗯，这种时候还挺像样', '继续，不要停', '保持这个速度', '还算有点样子',
+      '专注的时候勉强能看', '别分心', '就这样继续', '效率还行',
+      '...继续', '别停下', '保持', '还可以'
+    ],
+    fallen: ['...才没有摔倒', '哼，只是脚滑', '才不要你扶', '...痛', '别看我！', '才没有哭', '哼，不理你了', '...好痛'],
+    coding: ['代码写得...还行吧', 'bug 多着呢，慢慢改', '哼，这种小问题', '也就我能忍你的代码风格', '...继续写', '别问我', '自己查', '哼'],
+    video: ['看视频都不带我', '有什么好看的', '我才不想看呢', '你自己看吧', '哼', '无聊', '随便', '...'],
+    social: ['又在聊天啊', '朋友比我重要是吧', '哼，去聊吧', '我才不在乎', '随便你', '哼', '...才不嫉妒', '去吧'],
+    shopping: ['买这么多东西', '又在乱花钱', '我才不想要礼物呢', '你自己决定', '哼', '随便', '...才不想要', '买你的'],
+    learning: ['学习？也就那样', '哼，装什么认真', '别问我问题', '自己查去', '...不知道', '哼', '自己想', '随便'],
+    gaming: ['游戏有什么好玩的', '带我玩...也不是不行', '输了别找我', '赢了就了不起啊', '哼', '随便', '...才不想玩', '你自己玩']
   },
   sleepy: {
     bubbleStyle: 'cloud',
-    idle: ['呼，好想打个盹', '慢一点也没关系', '别忘了休息呀', '我还醒着陪你', '好困啊...', 'Zzz...', '眼皮好重', '再睡五分钟...'],
-    praise: ['你做完啦，真好', '我都替你开心', '辛苦啦', '这样就很好', '你真的好厉害', '我都看困了', '完成了就好', '可以休息了吗'],
-    clingy: ['摸一下我就不困了', '我还醒着，在陪你', '再点一下我就精神了', '陪我玩就不困了', '你陪我嘛', '我一个人好无聊', '戳我一下嘛', '我想和你玩'],
-    focused: ['静静做事的感觉真好', '先做完这一小段吧', '你现在很专注', '认真的时候很帅呢', '专注的样子很好看', '我也被你感染了', '一起努力吧', '这个节奏很舒服'],
-    coding: ['代码看得我头晕', '这个 bug 好难啊', '写代码好辛苦', '休息一下吧'],
-    video: ['这个视频好催眠', '看视频最放松了', '我也想看...Zzz', '好舒服的感觉'],
-    social: ['聊天好费神啊', '我想睡觉了', '社交好累', '让我休息会儿'],
-    shopping: ['逛得好累', '这个好看吗...我好困', '买东西也好麻烦', '随便选一个吧'],
-    learning: ['学习好辛苦', '这个知识点好难', '我想睡觉了', '明天再学吧'],
-    gaming: ['游戏好刺激...但我还是困', '玩一局就睡', '眼睛好酸', '该睡觉了']
+    idle: [
+      '呼，好想打个盹', '慢一点也没关系', '别忘了休息呀', '我还醒着陪你',
+      '好困啊...', 'Zzz...', '眼皮好重', '再睡五分钟...',
+      '...困', '想睡觉了~', '还在陪你哦...', '呼呼...'
+    ],
+    praise: [
+      '你做完啦，真好', '我都替你开心', '辛苦啦', '这样就很好',
+      '你真的好厉害', '我都看困了', '完成了就好', '可以休息了吗',
+      '...真好', '辛苦了~', '呼...做得好', 'Zzz...好棒'
+    ],
+    clingy: [
+      '摸一下我就不困了', '我还醒着，在陪你', '再点一下我就精神了', '陪我玩就不困了',
+      '你陪我嘛', '我一个人好无聊', '戳我一下嘛', '我想和你玩',
+      '...理我', '好困但想陪你', '呼...陪我', '别让我睡着'
+    ],
+    focused: [
+      '静静做事的感觉真好', '先做完这一小段吧', '你现在很专注', '认真的时候很帅呢',
+      '专注的样子很好看', '我也被你感染了', '一起努力吧', '这个节奏很舒服',
+      '...继续', '呼...加油', '困但陪你', 'Zzz...专注'
+    ],
+    fallen: ['...摔倒了...困', 'Zzz...摔了', '呼...好痛...困', '...要抱抱才能好', '呜...困', 'Zzz...痛', '...扶我', '呼...摔跤了'],
+    coding: ['代码看得我头晕', '这个 bug 好难啊', '写代码好辛苦', '休息一下吧', 'Zzz...代码', '呼...困', '...看不懂了', '想睡觉'],
+    video: ['这个视频好催眠', '看视频最放松了', '我也想看...Zzz', '好舒服的感觉', '呼...好看', 'Zzz...', '...困', '想睡'],
+    social: ['聊天好费神啊', '我想睡觉了', '社交好累', '让我休息会儿', 'Zzz...聊', '呼...困', '...累了', '想睡'],
+    shopping: ['逛得好累', '这个好看吗...我好困', '买东西也好麻烦', '随便选一个吧', 'Zzz...买', '呼...困', '...累了', '随便'],
+    learning: ['学习好辛苦', '这个知识点好难', '我想睡觉了', '明天再学吧', 'Zzz...学', '呼...困', '...不懂', '想睡'],
+    gaming: ['游戏好刺激...但我还是困', '玩一局就睡', '眼睛好酸', '该睡觉了', 'Zzz...玩', '呼...困', '...累了', '想睡']
   },
   genki: {
     bubbleStyle: 'rounded',
-    idle: ['冲呀冲呀', '今天也元气满满', '我觉得你马上就能搞定', '再推进一点点吧', '加油加油！', '你可以的！', '今天也是美好的一天', '充满干劲！'],
-    praise: ['漂亮！这下有感觉了', '这波节奏很对', '厉害厉害，继续冲', '太棒了！', '这就是你的实力！', '燃起来了！', '继续保持！', '你是最棒的！'],
-    clingy: ['快和我互动一下', '点我一下补充元气', '别把我晾在这里嘛', '陪我玩陪我玩！', '我想和你玩！', '快来快来！', '我等你好久了！', '一起玩嘛！'],
-    focused: ['现在火力全开', '这就是状态来了', '继续推，不要停', '效率爆表！', '这个节奏太棒了！', '保持这个势头！', '你认真起来超帅的！', '冲鸭！'],
-    coding: ['写代码超有趣的！', '这个 bug 我们来干掉它！', '编程的时候最帅了！', '代码写得飞起！'],
-    video: ['这个视频好好看！', '一起看一起看！', '视频时间到！', '这个超有趣的！'],
-    social: ['和朋友聊天好开心！', '有什么好玩的分享给我！', '社交时间到！', '我也想要朋友！'],
-    shopping: ['买买买！', '这个好好看！', '购物时间到！', '买到好东西了吗！'],
-    learning: ['学习超有趣的！', '这个知识点好棒！', '我要变聪明！', '知识就是力量！'],
-    gaming: ['玩游戏啦！', '带我一起玩！', '这局一定赢！', '游戏时间到！']
+    idle: [
+      '冲呀冲呀', '今天也元气满满', '我觉得你马上就能搞定', '再推进一点点吧',
+      '加油加油！', '你可以的！', '今天也是美好的一天', '充满干劲！',
+      '冲冲冲！', '能量满满！', '出发！', 'let\'s go！'
+    ],
+    praise: [
+      '漂亮！这下有感觉了', '这波节奏很对', '厉害厉害，继续冲', '太棒了！',
+      '这就是你的实力！', '燃起来了！', '继续保持！', '你是最棒的！',
+      '太赞了！', '完美！', '优秀！', '超厉害！'
+    ],
+    clingy: [
+      '快和我互动一下', '点我一下补充元气', '别把我晾在这里嘛', '陪我玩陪我玩！',
+      '我想和你玩！', '快来快来！', '我等你好久了！', '一起玩嘛！',
+      '理我理我！', '戳我戳我！', '陪我嘛~', '快来！'
+    ],
+    focused: [
+      '现在火力全开', '这就是状态来了', '继续推，不要停', '效率爆表！',
+      '这个节奏太棒了！', '保持这个势头！', '你认真起来超帅的！', '冲鸭！',
+      '冲冲冲！', '加油！', '你能行的！', '继续！'
+    ],
+    fallen: ['哎呀！摔倒了！', '痛痛痛！', '快扶我起来！', '呜呜呜！', '好痛呀！', '要抱抱！', '摔跤了！', '呜呜！'],
+    coding: ['写代码超有趣的！', '这个 bug 我们来干掉它！', '编程的时候最帅了！', '代码写得飞起！', '冲！', '加油！', '你能行的！', '继续！'],
+    video: ['这个视频好好看！', '一起看一起看！', '视频时间到！', '这个超有趣的！', '好看！', '冲！', '有趣！', '一起！'],
+    social: ['和朋友聊天好开心！', '有什么好玩的分享给我！', '社交时间到！', '我也想要朋友！', '开心！', '冲！', '有趣！', '一起！'],
+    shopping: ['买买买！', '这个好好看！', '购物时间到！', '买到好东西了吗！', '冲！', '买！', '好看！', '一起！'],
+    learning: ['学习超有趣的！', '这个知识点好棒！', '我要变聪明！', '知识就是力量！', '冲！', '加油！', '有趣！', '一起！'],
+    gaming: ['玩游戏啦！', '带我一起玩！', '这局一定赢！', '游戏时间到！', '冲！', '加油！', '赢！', '一起！']
   },
   cool: {
     bubbleStyle: 'minimal',
-    idle: ['嗯，我看着呢', '不用急', '节奏稳一点更好', '先把这一段处理完', '保持冷静', '按计划来', '不要慌', '稳扎稳打'],
-    praise: ['不错', '处理得很干净', '判断很准确', '这一步做得对', '符合预期', '效率可以', '继续保持', '很好'],
-    clingy: ['偶尔理我一下也行', '我还在这里', '别忘了我', '记得我在', '有空看看我', '我等着', '不急', '随时'],
-    focused: ['当前很适合继续工作', '保持专注', '这段时间效率不错', '状态很好', '继续推进', '不要分心', '节奏对了', '保持'],
-    coding: ['代码逻辑清晰', '这个实现可以', '继续写', '保持质量'],
-    video: ['适当放松', '控制时间', '看完了继续', '别太久'],
-    social: ['社交适可而止', '聊完继续工作', '别分心太久', '效率优先'],
-    shopping: ['理性消费', '买需要的', '别冲动', '考虑清楚'],
-    learning: ['知识点掌握', '继续深入', '保持学习', '不错'],
-    gaming: ['适度游戏', '控制时间', '别沉迷', '该停了']
+    idle: [
+      '嗯，我看着呢', '不用急', '节奏稳一点更好', '先把这一段处理完',
+      '保持冷静', '按计划来', '不要慌', '稳扎稳打',
+      '...', '嗯', '继续', '稳'
+    ],
+    praise: [
+      '不错', '处理得很干净', '判断很准确', '这一步做得对',
+      '符合预期', '效率可以', '继续保持', '很好',
+      '嗯', '可以', '行', '好'
+    ],
+    clingy: [
+      '偶尔理我一下也行', '我还在这里', '别忘了我', '记得我在',
+      '有空看看我', '我等着', '不急', '随时',
+      '...', '嗯', '在', '等'
+    ],
+    focused: [
+      '当前很适合继续工作', '保持专注', '这段时间效率不错', '状态很好',
+      '继续推进', '不要分心', '节奏对了', '保持',
+      '继续', '专注', '稳', '好'
+    ],
+    fallen: ['...摔了', '嗯，摔了', '...', '痛', '扶我', '...', '嗯', '起'],
+    coding: ['代码逻辑清晰', '这个实现可以', '继续写', '保持质量', '嗯', '继续', '稳', '好'],
+    video: ['适当放松', '控制时间', '看完了继续', '别太久', '嗯', '看', '稳', '好'],
+    social: ['社交适可而止', '聊完继续工作', '别分心太久', '效率优先', '嗯', '聊', '稳', '好'],
+    shopping: ['理性消费', '买需要的', '别冲动', '考虑清楚', '嗯', '买', '稳', '好'],
+    learning: ['知识点掌握', '继续深入', '保持学习', '不错', '嗯', '学', '稳', '好'],
+    gaming: ['适度游戏', '控制时间', '别沉迷', '该停了', '嗯', '玩', '稳', '好']
   },
   writer: {
     bubbleStyle: 'handwrite',
@@ -427,18 +789,61 @@ function moodSpeech(kind, fallback) {
 }
 
 function pickContextualLine() {
+  // 1. 优先检查时间问候
+  const timeGreeting = TimeAwareness.getTimeGreeting();
+  if (timeGreeting) return timeGreeting;
+  
+  // 2. 检查追问
+  if (ConversationMemory.shouldFollowUp()) {
+    const followUp = ConversationMemory.generateFollowUp();
+    if (followUp) return followUp;
+  }
+  
+  // 3. 时间段问候
   const hour = new Date().getHours();
-  if (hour >= 23 || hour <= 6) return `${preferredName()}，夜深了，我们该慢一点啦`;
-  if (activeAppContext.category === 'coding') return `${preferredName()}在写代码呀，我帮你盯着节奏`;
-  if (activeAppContext.category === 'document') return `${preferredName()}在看文档呢，慢慢读也很好`;
-  if (activeAppContext.category === 'meeting') return `${preferredName()}在开会，我会安静陪着`;
-  if (activeAppContext.category === 'design') return `${preferredName()}在做设计呀，感觉很认真`;
-  if (activeAppContext.category === 'fun') return `${preferredName()}现在在放松一下吗`;
+  const persona = currentPersona();
+  
+  // 深夜提醒
+  if (hour >= 23 || hour <= 6) {
+    const lateNightLines = [
+      `${preferredName()}，夜深了，我们该慢一点啦`,
+      '这么晚了，还不睡吗？',
+      '熬夜对身体不好哦~',
+      '该休息啦，明天继续~'
+    ];
+    return lateNightLines[Math.floor(Math.random() * lateNightLines.length)];
+  }
+  
+  // 4. 根据当前应用场景
+  if (activeAppContext.category === 'coding') {
+    ConversationMemory.setTopic('coding');
+    return Dialogue.pick(persona.coding || Speeches.scene?.coding || [`${preferredName()}在写代码呀`]);
+  }
+  if (activeAppContext.category === 'document') {
+    ConversationMemory.setTopic('reading');
+    return Dialogue.pick(persona.reading || [`${preferredName()}在看文档呢`]);
+  }
+  if (activeAppContext.category === 'meeting') {
+    return `${preferredName()}在开会，我会安静陪着`;
+  }
+  if (activeAppContext.category === 'design') {
+    return `${preferredName()}在做设计呀，感觉很认真`;
+  }
+  if (activeAppContext.category === 'fun') {
+    ConversationMemory.setTopic('video');
+    return Dialogue.pick(persona.video || [`${preferredName()}现在在放松一下吗`]);
+  }
+  
+  // 5. 根据心情
   if (companionData?.mood === 'proud') return Dialogue.pick(moodSpeech('praise', Speeches.praise));
   if (companionData?.mood === 'clingy') return Dialogue.pick(moodSpeech('clingy', Speeches.tease));
   if (companionData?.mood === 'focused') return Dialogue.pick(moodSpeech('focused', Speeches.daily));
+  
+  // 6. 备忘关键词
   const keyword = dominantMemoKeyword();
   if (keyword) return `${preferredName()}最近总在忙"${keyword}"呀`;
+  
+  // 7. 默认空闲
   return Dialogue.pick(moodSpeech('idle', Speeches.idle));
 }
 
@@ -674,7 +1079,6 @@ function showBubble(text, opts = {}) {
   if (!Dialogue.canSpeak(text, force)) return;
 
   if (bubbleTimer) clearTimeout(bubbleTimer);
-  bubbleText.textContent = text;
   
   const persona = currentPersona();
   const style = persona.bubbleStyle || bubbleStyle;
@@ -683,19 +1087,28 @@ function showBubble(text, opts = {}) {
   bubble.classList.add('bubble-' + style);
   
   bubble.style.display = 'block';
+  
+  // 使用打字机效果
+  TypeWriter.start(text, () => {
+    Dialogue.remember(text);
+    ConversationMemory.record(text, 'pet');
+  });
+  
   requestAnimationFrame(() => {
     positionBubble();
     bubble.classList.add('showing');
   });
 
-  Dialogue.remember(text);
-  setDialogueState(DialogueState.SPEAKING, 3500);
-
+  // 计算显示时间：基础时间 + 文字长度 * 50ms
+  const displayTime = 3000 + text.length * 50;
+  
   bubbleTimer = setTimeout(() => {
     bubble.classList.remove('showing');
     setTimeout(() => { bubble.style.display = 'none'; }, 200);
-    if (dialogueState === DialogueState.SPEAKING) setDialogueState(DialogueState.SILENT);
-  }, 4000);
+    if (dialogueState === DialogueState.SPEAKING || dialogueState === DialogueState.TYPING) {
+      setDialogueState(DialogueState.SILENT);
+    }
+  }, displayTime);
 }
 
 // ═══════════════════════════════════════
@@ -807,9 +1220,15 @@ function render() {
     rot = Math.sin(floatOffset * 0.8) * 0.018;
     offsetY = Math.sin(floatOffset * 1.4) * 1.3;
     scaleY += Math.sin(floatOffset * 1.2) * 0.01;
+  } else if (motionState === MotionState.FALLEN) {
+    // 摔倒状态：倾斜 + 躺倒
+    rot = 0.4; // 向右倾斜
+    offsetY = 15; // 向下移
+    scaleX = 0.95;
+    scaleY = 0.9;
   }
 
-  if (dialogueState === DialogueState.SPEAKING) {
+  if (dialogueState === DialogueState.SPEAKING || dialogueState === DialogueState.TYPING) {
     offsetY += Math.sin(floatOffset * 3) * 1.1;
     scaleY += Math.sin(floatOffset * 3) * 0.02;
     scaleX -= Math.sin(floatOffset * 3) * 0.012;
@@ -843,6 +1262,20 @@ function render() {
     ctx.fillStyle = 'rgba(120, 120, 255, 0.7)';
     const zz = 'z'.repeat((Math.floor(floatOffset / 20) % 3) + 1);
     ctx.fillText(zz, drawX + 30, drawY - h * 0.5 - Math.sin(floatOffset) * 6);
+  }
+  
+  // 摔倒时显示星星特效
+  if (motionState === MotionState.FALLEN) {
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = 'rgba(255, 200, 0, 0.8)';
+    const stars = ['✦', '✧', '★'];
+    for (let i = 0; i < 3; i++) {
+      const angle = floatOffset * 2 + i * Math.PI * 2 / 3;
+      const radius = 25 + Math.sin(floatOffset * 3 + i) * 5;
+      const sx = drawX + Math.cos(angle) * radius;
+      const sy = drawY - h * 0.3 + Math.sin(angle) * radius * 0.5;
+      ctx.fillText(stars[i], sx, sy);
+    }
   }
 
   // 更新按钮位置
@@ -952,6 +1385,19 @@ async function loadAll() {
       randomMoveEnabled = settings.randomMoveEnabled !== false;
     }
   } catch (e) {}
+
+  // 初始化时间感知系统
+  TimeAwareness.init();
+  
+  // 初始化鼠标空闲检测（8秒触发摔倒）
+  MouseIdleDetector.init((idleTime) => {
+    if (motionState !== MotionState.SLEEPING && dialogueState === DialogueState.SILENT) {
+      setMotionState(MotionState.FALLEN, 5000);
+      const persona = currentPersona();
+      const fallenLines = persona.fallen || ['哥哥我摔倒了~', '呜呜，摔倒了...', '好痛呀，扶扶我嘛~'];
+      showBubble(Dialogue.pick(fallenLines), { force: true });
+    }
+  });
 
   setInterval(() => {
     const hour = new Date().getHours();
