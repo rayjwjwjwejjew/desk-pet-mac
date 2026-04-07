@@ -43,6 +43,42 @@ function saveCompanionData(data) {
   fs.writeFileSync(COMPANION_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
+// ─── 智能屏幕检测状态追踪 ───
+let lastAppName = '';
+let lastAppEnteredAt = Date.now();
+let sceneHistory = []; // { scene, enteredAt }
+const MAX_SCENE_HISTORY = 5;
+
+function recordSceneEntry(scene) {
+  const now = Date.now();
+  // 场景相同则不重复记录
+  if (sceneHistory.length > 0 && sceneHistory[sceneHistory.length - 1].scene === scene) return;
+  sceneHistory.push({ scene, enteredAt: now });
+  if (sceneHistory.length > MAX_SCENE_HISTORY) sceneHistory.shift();
+}
+
+function getSceneDuration(scene) {
+  if (sceneHistory.length === 0) return 0;
+  const last = [...sceneHistory].reverse().find(s => s.scene === scene);
+  return last ? Date.now() - last.enteredAt : 0;
+}
+
+function getTimeOfDay() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 9)  return 'earlyMorning';
+  if (h >= 9 && h < 12) return 'morning';
+  if (h >= 12 && h < 14) return 'noon';
+  if (h >= 14 && h < 18) return 'afternoon';
+  if (h >= 18 && h < 22) return 'evening';
+  if (h >= 22 || h < 2) return 'night';
+  return 'lateNight';
+}
+
+function getDayType() {
+  const day = new Date().getDay();
+  return (day === 0 || day === 6) ? 'weekend' : 'weekday';
+}
+
 function getActiveAppContext() {
   try {
     const raw = execFileSync('osascript', [
@@ -54,15 +90,45 @@ function getActiveAppContext() {
     const name = appName.toLowerCase();
     let category = 'idle';
 
-    if (/(cursor|vscode|visual studio code|webstorm|xcode|terminal|iterm|trae|zed|sublime)/.test(name)) category = 'coding';
-    else if (/(safari|chrome|firefox|edge|arc|obsidian|notion|preview|word|pages|pdf)/.test(name)) category = 'document';
-    else if (/(zoom|tencent meeting|meeting|wechat|feishu|slack|discord)/.test(name)) category = 'meeting';
-    else if (/(figma|photoshop|illustrator|canva|pixelmator)/.test(name)) category = 'design';
-    else if (/(music|spotify|qqmusic|netease|steam|bilibili|tv|vlc)/.test(name)) category = 'fun';
+    // 代码 / 开发
+    if (/(cursor|vscode|visual studio code|webstorm|phpstorm|goland|pycharm|intellij|idea|xcode|terminal|iterm|iterm2|trae|zed|sublime|vim|emacs|docker|vmware|parallels|rancher)/.test(name)) {
+      category = 'coding';
+    }
+    // 文档 / 阅读 / 笔记
+    else if (/(safari|chrome|firefox|edge|arc|obsidian|notion|evernote|bear|typora|oneNote|onenote|preview|word|pages|pdf-reader|skim|reader)/.test(name)) {
+      category = 'document';
+    }
+    // 会议 / 通话
+    else if (/(zoom|tencent meeting|meeting|腾讯会议|welink|lark|vega|skype)/.test(name)) {
+      category = 'meeting';
+    }
+    // 设计 / 创意
+    else if (/(figma|photoshop|illustrator|canva|pixelmator|sketch|affinity|gimp|blender|after effects|premiere|davinci)/.test(name)) {
+      category = 'design';
+    }
+    // 娱乐 / 音乐 / 视频
+    else if (/(music|spotify|qqmusic|netease|apple music|listen 1|steam|epic|bilibili|tv|vlc|vox|audirvana)/.test(name)) {
+      category = 'fun';
+    }
+    // 即时通讯
+    else if (/(wechat|微信|telegram|qq|tim|whatsapp|line|messenger|signal)/.test(name)) {
+      category = 'chat';
+    }
+    // 邮箱
+    else if (/(mail|thunderbird|outlook|gmail|foxmail|spark|polymail)/.test(name)) {
+      category = 'email';
+    }
 
-    return { appName, category, fetchedAt: Date.now() };
+    // 追踪 App 进入时间
+    const now = Date.now();
+    if (appName !== lastAppName) {
+      lastAppName = appName;
+      lastAppEnteredAt = now;
+    }
+
+    return { appName, category, fetchedAt: now, duration: now - lastAppEnteredAt };
   } catch (e) {
-    return { appName: '', category: 'idle', fetchedAt: Date.now() };
+    return { appName: '', category: 'idle', fetchedAt: Date.now(), duration: 0 };
   }
 }
 
@@ -87,40 +153,50 @@ async function getBrowserPageInfo() {
     let siteType = 'unknown';
     let siteName = '';
     
+    // AI 助手（优先级最高）
+    if (/(chatgpt|claude|gemini|perplexity|通义|文心|智谱|讯飞|kimi|deepseek|豆包|coze|openai|anthropic)/.test(title)) {
+      siteType = 'ai';
+      siteName = 'AI助手';
+    }
     // 视频网站
-    if (/(youtube|bilibili|哔哩哔哩|netflix|腾讯视频|爱奇艺|优酷|抖音|tiktok)/.test(title)) {
+    else if (/(youtube|bilibili|哔哩哔哩|netflix|腾讯视频|爱奇艺|优酷|抖音|tiktok|虎牙|douyin)/.test(title)) {
       siteType = 'video';
       siteName = '视频';
     }
     // 社交媒体
-    else if (/(twitter|x\.com|微博|weibo|小红书|instagram|facebook|朋友圈)/.test(title)) {
+    else if (/(twitter|x\.com|微博|weibo|小红书|instagram|facebook|朋友圈|知乎|bilibili动态)/.test(title)) {
       siteType = 'social';
       siteName = '社交';
     }
     // 购物
-    else if (/(淘宝|天猫|京东|amazon|拼多多|购物)/.test(title)) {
+    else if (/(淘宝|天猫|京东|amazon|拼多多|唯品会|1688|购物)/.test(title)) {
       siteType = 'shopping';
       siteName = '购物';
     }
-    // 学习/知识
-    else if (/(github|stackoverflow|知乎|掘金|csdn|leetcode|牛客|wikipedia|wiki|教程|学习)/.test(title)) {
+    // 学习/知识/代码平台
+    else if (/(github|codepen|jsfiddle|replit|stackoverflow|知乎|掘金|csdn|leetcode|牛客|wikipedia|wiki|教程|学习|coursera|udemy|慕课)/.test(title)) {
       siteType = 'learning';
       siteName = '学习';
     }
     // 工作/办公
-    else if (/(gmail|outlook|邮件|文档|doc|sheet|飞书|钉钉|腾讯文档|石墨)/.test(title)) {
+    else if (/(gmail|outlook|邮件|文档|doc|sheet|飞书|钉钉|腾讯文档|石墨|notion|slack|trello|asana|jira|linear)/.test(title)) {
       siteType = 'work';
       siteName = '工作';
     }
-    // 新闻
-    else if (/(news|新闻|头条)/.test(title)) {
+    // 新闻 / 资讯
+    else if (/(news|新闻|头条|虎嗅|36kr|少数派|reddit|hacker news|techcrunch)/.test(title)) {
       siteType = 'news';
-      siteName = '新闻';
+      siteName = '资讯';
     }
     // 游戏
-    else if (/(game|游戏|steam|epic)/.test(title)) {
-      siteType = 'game';
+    else if (/(game|游戏|steam|epic|wegame|、原|赛事|lol|我的世界)/.test(title)) {
+      siteType = 'gaming';
       siteName = '游戏';
+    }
+    // 视频会议
+    else if (/(zoom|腾讯会议|meeting|webex|skype)/.test(title)) {
+      siteType = 'meeting';
+      siteName = '会议';
     }
     
     return { windowTitle, siteType, siteName, hasContent: siteType !== 'unknown' };
@@ -129,16 +205,19 @@ async function getBrowserPageInfo() {
   }
 }
 
-// 屏幕内容识别 - 综合分析当前场景
+// 屏幕内容识别 - 综合分析当前场景（智能增强版）
 async function analyzeScreenContext() {
   const appContext = getActiveAppContext();
   const browserInfo = await getBrowserPageInfo();
   
-  // 综合分析场景
+  // 综合分析场景（浏览器 siteType 优先于 App category）
   let scene = 'idle';
   let detail = '';
   
-  if (appContext.category === 'coding') {
+  if (browserInfo.siteType === 'ai') {
+    scene = 'ai';
+    detail = '和AI聊天';
+  } else if (appContext.category === 'coding') {
     scene = 'coding';
     detail = '写代码';
   } else if (appContext.category === 'design') {
@@ -159,12 +238,43 @@ async function analyzeScreenContext() {
   } else if (browserInfo.siteType === 'work') {
     scene = 'working';
     detail = '办公';
-  } else if (browserInfo.siteType === 'game') {
+  } else if (browserInfo.siteType === 'gaming') {
     scene = 'gaming';
     detail = '游戏';
+  } else if (browserInfo.siteType === 'meeting') {
+    scene = 'meeting';
+    detail = '开会';
+  } else if (browserInfo.siteType === 'news') {
+    scene = 'news';
+    detail = '看资讯';
+  } else if (appContext.category === 'chat') {
+    scene = 'chatting';
+    detail = '聊天';
+  } else if (appContext.category === 'email') {
+    scene = 'emailing';
+    detail = '处理邮件';
   } else if (appContext.category === 'document') {
     scene = 'reading';
     detail = '阅读';
+  }
+  
+  // 记录场景历史，计算时长
+  recordSceneEntry(scene);
+  const sceneDuration = getSceneDuration(scene);
+  const appDuration = appContext.duration || 0;
+  
+  // 场景转换检测（从工作类→摸鱼类）
+  let moodHint = null;
+  if (sceneHistory.length >= 2) {
+    const prev = sceneHistory[sceneHistory.length - 2]?.scene;
+    const curr = scene;
+    const seriousScenes = ['coding', 'working', 'learning', 'meeting'];
+    const relaxScenes = ['video', 'social', 'gaming', 'chatting'];
+    if (seriousScenes.includes(prev) && relaxScenes.includes(curr)) {
+      moodHint = 'distraction'; // 摸鱼中
+    } else if (relaxScenes.includes(prev) && seriousScenes.includes(curr)) {
+      moodHint = 'backToWork'; // 回归工作
+    }
   }
   
   return {
@@ -172,7 +282,12 @@ async function analyzeScreenContext() {
     browser: browserInfo,
     scene,
     detail,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    sceneDuration,    // 毫秒
+    appDuration,      // 毫秒
+    timeOfDay: getTimeOfDay(),
+    dayType: getDayType(),
+    moodHint,
   };
 }
 

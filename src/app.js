@@ -740,26 +740,102 @@ const Speeches = {
   click: ['诶，你点到我啦', '轻一点嘛', '我有在认真陪你', '被你发现了', '今天也摸摸我吧', '好痒呀', '再点一下', '喜欢我吗', '你真好', '好开心', '被你发现了', '嘿嘿', '你戳到我了', '好舒服'],
   // 场景对话
   scene: {
-    coding: ['写代码呢？加油！', '又在敲代码啦', 'bug 修完了吗', '代码写得怎么样', '专注编程的样子很帅', '这行代码写得不错', '逻辑很清晰', '继续写，我陪着你'],
-    video: [
-      '一起摸鱼吧~',
-      '哇看视频呢，带我一个！',
-      '这个视频好看吗',
-      'B站冲浪中？我也要看！',
-      '摸鱼时间到！',
-      '看视频也要记得休息眼睛哦',
-      '什么好玩的呀，给我看看嘛',
-      '视频时间，休息一下吧',
-      '放松一下也好，别太累',
-      '看完记得起来动一动~',
+    // ═══ 代码 ═══
+    coding: [
+      '写代码呢？加油！', '又在敲代码啦', 'bug 修完了吗', '代码写得怎么样', '专注编程的样子很帅',
+      '这行代码写得不错', '逻辑很清晰', '继续写，我陪着你', '有什么需要帮忙的吗', '写代码辛苦了',
+      '你真的很厉害！', '这个思路很棒', '专注的你很有魅力', '加油，你可以的', '我在这里给你打气',
+      '代码质量很高', '这个函数写得很优雅', '写完这段休息一下', '我看好你哦', 'bug 会有的，但你会修好的',
     ],
-    social: ['又在刷社交软件', '看到什么好玩的了', '和朋友聊得开心吗', '社交时间到', '别刷太久哦', '记得回我消息', '我也要玩', '带我一个'],
-    shopping: ['在买东西吗', '这个好看吗', '理性消费哦', '买到喜欢的了吗', '购物车借我看看', '我也要礼物', '买这个买那个', '购物时间'],
-    learning: ['在学习呀，真棒', '这个知识点有意思', '学习使我快乐', '你认真的样子真好看', '好学的孩子', '知识就是力量', '继续学习', '我陪你学'],
-    gaming: ['玩游戏呢', '这局打得怎么样', '带我一起玩', '游戏时间到', '别玩太久', '赢了吗', '输了别气馁', '再来一局'],
-    working: ['在工作呀', '工作辛苦了', '效率很高嘛', '继续加油', '工作也要注意休息', '你很敬业', '忙完了吗', '我陪你工作'],
-    reading: ['在阅读呢', '看什么有意思的内容', '阅读使人进步', '读到什么好玩的', '分享给我听听', '我也想看', '读书时间', '安静阅读'],
-    entertainment: ['在娱乐呢', '放松放松', '娱乐时间到', '开心吗', '玩得开心', '休息一下', '娱乐也很重要', '享受当下']
+    // ═══ AI助手（新增） ═══
+    ai: [
+      '在和AI聊天呀？问什么了', 'AI能回答上的问题很厉害呢', '让AI帮你做什么', 'AI说的有道理吗', 'AI越来越聪明了',
+      '有什么想了解的可以问我', 'AI的回答满意吗', '你在探索新知识呀', '我也想试试AI', 'AI时代真方便',
+      '问AI什么问题呢', '有没有得到好答案', 'AI帮你解决了什么', 'AI说的对吗', '和AI聊天很有趣吧',
+    ],
+    // ═══ 视频 ═══
+    video: [
+      '一起摸鱼吧~', '哇看视频呢，带我一个！', '这个视频好看吗', 'B站冲浪中？我也要看！', '摸鱼时间到！',
+      '看视频也要记得休息眼睛哦', '什么好玩的呀，给我看看嘛', '视频时间，休息一下吧', '放松一下也好，别太累',
+      '看完记得起来动一动~', '这个视频讲什么的呀', '弹幕好玩吗', '追的什么内容呢', 'UP主有意思吗',
+      '倍速看还是正常速度呀', '影视还是教程？', '视频看多久了呀', '记得眨眼，护眼重要', '看完继续努力~',
+    ],
+    // ═══ 社交 ═══
+    social: [
+      '又在刷社交软件', '看到什么好玩的了', '和朋友聊得开心吗', '社交时间到', '别刷太久哦', '记得回我消息',
+      '我也要玩', '带我一个', '朋友圈有什么好玩的', '微博热搜看了吗', '小红书刷到什么了', '有什么新鲜事',
+      '朋友找你了吗', '社交虽然快乐但也要适度', '看完记得抬头', '和谁聊天呢', '消息多吗',
+      '有人@你了吗', '社交圈真热闹', '别忘了现实生活里还有我', '刷完这页就休息一下',
+    ],
+    // ═══ 购物 ═══
+    shopping: [
+      '在买东西吗', '这个好看吗', '理性消费哦', '买到喜欢的了吗', '购物车借我看看', '我也要礼物',
+      '买这个买那个', '购物时间', '有什么想买的呀', '满减凑好了吗', '快递什么时候到呢',
+      '比价了吗', '这个划算吗', '买完快去忙正事', '又剁手了呀', '钱包还好吗',
+      '需要我帮你参谋吗', '买完记得关掉购物APP', '种草还是拔草呢', '下次再买也不迟哦',
+    ],
+    // ═══ 学习 ═══
+    learning: [
+      '在学习呀，真棒', '这个知识点有意思', '学习使我快乐', '你认真的样子真好看', '好学的孩子',
+      '知识就是力量', '继续学习', '我陪你学', '学到什么了', '有笔记了吗', '学完教教我呗',
+      '这个知识点有点难吧', '你理解得很快', '加油，你可以的', '学习累了就休息一下',
+      '学以致用最厉害', '这段搞懂了吗', '考试准备得怎么样了', '坚持就是胜利', '知识越来越多了',
+    ],
+    // ═══ 游戏 ═══
+    gaming: [
+      '玩游戏呢', '这局打得怎么样', '带我一起玩', '游戏时间到', '别玩太久哦', '赢了吗',
+      '输了别气馁', '再来一局', '什么游戏呀', '队友怎么样', '排位赛吗', '段位上去了吗',
+      '游戏虽好不要贪玩', '玩完记得休息眼睛', '通关了吗', '氪金了吗', '游戏好玩吗',
+      '赢了请我吃饭', '输了安慰我一下', '游戏里有什么好玩的',
+    ],
+    // ═══ 工作 ═══
+    working: [
+      '在工作呀', '工作辛苦了', '效率很高嘛', '继续加油', '工作也要注意休息', '你很敬业',
+      '忙完了吗', '我陪你工作', '什么项目呢', 'deadline 紧吗', '开会了吗',
+      '报告写到哪里了', '邮件处理完了吗', '今天的任务完成了吗', '我帮你加油打气',
+      '累了就休息一下', '工作顺利吗', '有什么我可以帮忙的吗', '你真的很努力',
+    ],
+    // ═══ 开会（新增） ═══
+    meeting: [
+      '在开会呀', '认真听哦', '会议重要吗', '记得发表意见', '会议什么时候结束', '讨论什么呢',
+      '有我在你旁边', '会议加油', '别走神了哦', '要不要给你倒杯水',
+    ],
+    // ═══ 资讯（新增） ═══
+    news: [
+      '在看新闻呀', '有什么新鲜事', '今天有什么大新闻', '这条有意思吗', '资讯看完了吗',
+      '信息量好大', '保持独立思考哦', '新闻看了别焦虑', '有什么感想吗',
+    ],
+    // ═══ 聊天（新增） ═══
+    chatting: [
+      '和朋友聊天呀', '聊什么呢', '开心吗', '是重要的人吗', '笑得这么开心',
+      '在和谁说话呢', '多聊聊也好', '别忘了现实里还有我', '朋友很重要',
+    ],
+    // ═══ 邮件（新增） ═══
+    emailing: [
+      '在处理邮件呀', '邮件多吗', '有重要邮件吗', '回完了吗', '处理完继续努力',
+      '邮箱要定期清理哦', '重要邮件别漏了', '邮件也是一种沟通',
+    ],
+    // ═══ 阅读 ═══
+    reading: [
+      '在阅读呢', '看什么有意思的内容', '阅读使人进步', '读到什么好玩的', '分享给我听听',
+      '我也想看', '读书时间', '安静阅读', '这本书好看吗', '学到了什么',
+      '阅读量越来越大了', '安静的你很有魅力', '读完了告诉我感想', '好书值得细读',
+    ],
+    // ═══ 设计 ═══
+    design: [
+      '在设计呢', '灵感来了吗', '设计得怎么样', '很有美感呀', '配色很好',
+      '这个创意很棒', '设计作品完成了多少', '休息一下眼睛', '设计师真厉害',
+    ],
+    // ═══ 摸鱼被抓（智能场景转换） ═══
+    distraction: [
+      '嘘——被我抓到了！', '原来在偷偷摸鱼呀~', '工作没做完就在看这个？', '被我抓包了哦', '摸鱼被我发现了',
+      '嘻嘻，被我逮到了吧', '认真工作呢？才不信~', '这可不是工作时间哦', '摸鱼时间够了吗', '该回来工作啦',
+    ],
+    // ═══ 回归工作 ═══
+    backToWork: [
+      '终于回来工作了！', '这就对了嘛~', '加油加油', '专注的你最帅了', '工作状态回来啦',
+      '我就知道你不会一直摸鱼的', '这才是正确的选择', '好了好了，干活吧~', '欢迎回来~', '继续努力！',
+    ],
   },
   region: {
     上方: ['在看上面呢？', '上面有什么好玩的？', '往上看什么呢', '上面有什么'],
@@ -975,55 +1051,63 @@ function syncActiveAppContext() {
   }).catch(() => {});
 }
 
-// 屏幕场景识别和对话
+// 屏幕场景识别和对话（智能增强版）
 let lastSceneContext = null;
 let sceneDialogueCooldown = 0;
 
 function analyzeAndSpeak() {
-  // 冷却时间 30 秒
   const now = Date.now();
-  if (now - sceneDialogueCooldown < 30000) return;
+  if (now - sceneDialogueCooldown < 25000) return;
   
   window.electronAPI?.analyzeScreenContext?.().then((context) => {
     if (!context) return;
     
-    const { scene, detail, app, browser } = context;
+    const { scene, detail, app, browser, moodHint, sceneDuration, timeOfDay, dayType } = context;
     
-    // 如果场景没变，不重复触发
-    if (lastSceneContext === scene) return;
-    lastSceneContext = scene;
+    // 如果场景没变，检查时长——超过3分钟才再次触发
+    if (lastSceneContext === scene && sceneDuration < 180000) return;
     
-    // 获取当前人设的场景对话
     const persona = currentPersona();
     let dialogue = '';
     
-    // 优先使用人设特定的场景对话
-    if (persona[scene] && persona[scene].length > 0) {
+    // 优先级：moodHint（场景转换）> persona场景 > 通用场景 > app类别兜底
+    if (moodHint === 'distraction' && Speeches.scene.distraction?.length) {
+      dialogue = Dialogue.pick(Speeches.scene.distraction);
+    } else if (moodHint === 'backToWork' && Speeches.scene.backToWork?.length) {
+      dialogue = Dialogue.pick(Speeches.scene.backToWork);
+    } else if (scene === lastSceneContext && sceneDuration >= 180000) {
+      // 场景持续超过3分钟 → 说一句鼓励或调侃
+      const longStay = ['coding', 'working', 'learning'].includes(scene)
+        ? ['这么久还坚持着呢，真棒！', '这么久了，休息一下吧', '专注了很久了，起来动动', '你真的很能坚持！']
+        : ['还在这里呢，辛苦了~', '看了好久了，要休息吗', '这么久，不累吗', '要不要换个事情做做'];
+      dialogue = Dialogue.pick(longStay);
+    } else if (persona[scene] && persona[scene].length > 0) {
       dialogue = Dialogue.pick(persona[scene]);
-    } 
-    // 其次使用通用场景对话
-    else if (Speeches.scene[scene] && Speeches.scene[scene].length > 0) {
+    } else if (Speeches.scene[scene] && Speeches.scene[scene].length > 0) {
       dialogue = Dialogue.pick(Speeches.scene[scene]);
-    }
-    // 使用应用类型对话
-    else if (app.category === 'coding') {
+    } else if (app.category === 'coding') {
       dialogue = Dialogue.pick(persona.coding || Speeches.scene.coding);
     } else if (app.category === 'design') {
       dialogue = Dialogue.pick(persona.design || ['设计得怎么样', '创作中吗']);
     }
     
     if (dialogue) {
+      lastSceneContext = scene;
       sceneDialogueCooldown = now;
       showBubble(dialogue, { force: true });
       
       // 根据场景调整心情
       if (scene === 'coding' || scene === 'learning' || scene === 'working') {
         companionData.mood = 'focused';
-      } else if (scene === 'gaming' || scene === 'video') {
+        if (motionState === MotionState.IDLE) setMotionState(MotionState.WORKING, 2600);
+      } else if (['gaming', 'video', 'ai', 'social'].includes(scene)) {
         companionData.mood = 'clingy';
-      } else if (scene === 'social') {
-        companionData.mood = 'happy';
+      } else if (scene === 'meeting') {
+        companionData.mood = 'calm';
       }
+      
+      // 记录话题
+      ConversationMemory.setTopic(scene);
     }
   }).catch(() => {});
 }
